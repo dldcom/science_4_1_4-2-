@@ -1,0 +1,6 @@
+# Ignore textbook PDF and other temp/build files
+[과학]4-1-4_교과서.pdf
+node_modules/
+dist/
+.env
+.DS_Store
