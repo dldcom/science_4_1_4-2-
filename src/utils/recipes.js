@@ -69,8 +69,49 @@ export const baseMicrobes = {
     miningSpeed: 0.9,
     capacity: 8,
     avatarSvg: 'lactobacillus'
+  },
+  '이스트': {
+    name: '이스트',
+    type: '균류',
+    tier: 1,
+    glowColor: '#ffb74d',
+    description: '단세포로 이루어진 균류(효모)로, 당분을 분해하여 이산화탄소를 만들어 빵 등을 부풀립니다.',
+    miningSpeed: 1.0,
+    capacity: 9,
+    avatarSvg: 'yeast'
+  },
+  '고초균': {
+    name: '고초균',
+    type: '세균',
+    tier: 1,
+    glowColor: '#a1887f',
+    description: '짚이나 흙 속에 살며 열과 건조함에 매우 강한 막대 모양의 세균. 콩 단백질을 발효시켜 몸에 좋은 영양소와 끈적한 실을 만들어 냅니다.',
+    miningSpeed: 0.9,
+    capacity: 10,
+    avatarSvg: 'bacillus'
   }
 };
+
+export const microbeEmojis = {
+  '버섯': '🍄',
+  '곰팡이': '🦠',
+  '아메바': '🧬',
+  '해캄': '🌿',
+  '대장균': '🧪',
+  '젖산균': '🥛',
+  '이스트': '🥯',
+  '고초균': '🌾',
+  '화산 버섯': '🌋',
+  '네온 곰팡이': '💎',
+  '포자버섯 젤리': '🔮',
+  '제트 짚신벌레': '🚀',
+  '블랙홀 아메바': '🌀',
+  '우주 태양 아메바': '☀',
+  '메가 이스트': '🥖',
+  '누룩곰팡이': '🍚',
+  '아세트산균': '🏺'
+};
+
 
 export const combinedMicrobes = {
   '화산 버섯': {
@@ -132,6 +173,36 @@ export const combinedMicrobes = {
     miningSpeed: 5.0,
     capacity: 50,
     avatarSvg: 'sun_amoeba'
+  },
+  '메가 이스트': {
+    name: '메가 이스트',
+    type: '균류 (변종)',
+    tier: 2,
+    glowColor: '#ffb74d',
+    description: '이스트 두 개를 합쳐 발효 능력을 극대화한 거대 효모. 주변에 엄청난 이산화탄소 기포를 발생시킵니다.',
+    miningSpeed: 2.2,
+    capacity: 22,
+    avatarSvg: 'mega_yeast'
+  },
+  '누룩곰팡이': {
+    name: '누룩곰팡이',
+    type: '균류 (변종)',
+    tier: 2,
+    glowColor: '#e0e0e0',
+    description: '쌀이나 콩 등에 번식하여 전통 발효의 핵심이 되는 누룩곰팡이. 각종 소화 효소를 다량 분비하여 복잡한 유기물을 잘게 분해합니다.',
+    miningSpeed: 1.8,
+    capacity: 35,
+    avatarSvg: 'koji_mold'
+  },
+  '아세트산균': {
+    name: '아세트산균',
+    type: '세균 (변종)',
+    tier: 2,
+    glowColor: '#81c784',
+    description: '알코올을 아세트산(초산)으로 바꾸는 능력을 가진 세균. 새콤한 식초를 생산하는 데 기여합니다.',
+    miningSpeed: 2.0,
+    capacity: 25,
+    avatarSvg: 'acetobacter'
   }
 };
 
@@ -143,7 +214,10 @@ export const recipes = {
   '버섯+곰팡이': '포자버섯 젤리',
   '짚신벌레+짚신벌레': '제트 짚신벌레',
   '아메바+아메바': '블랙홀 아메바',
-  '아메바+해캄': '우주 태양 아메바' // 해캄(초록 자가영양) + 아메바 = 우주 태양 아메바
+  '아메바+해캄': '우주 태양 아메바', // 해캄(초록 자가영양) + 아메바 = 우주 태양 아메바
+  '이스트+이스트': '메가 이스트',
+  '곰팡이+이스트': '누룩곰팡이',
+  '대장균+젖산균': '아세트산균'
 };
 
 // 조합 함수

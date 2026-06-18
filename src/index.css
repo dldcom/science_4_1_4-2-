@@ -1,15 +1,24 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@400;500;700;900&family=Share+Tech+Mono&display=swap');
+
+@theme {
+  --font-sans: 'Space Grotesk', system-ui, sans-serif;
+  --font-mono: 'Share Tech Mono', monospace;
+  --font-scifi: 'Orbitron', sans-serif;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
 
 :root {
-  font-family: 'Courier New', Courier, monospace, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-family: var(--font-sans);
   line-height: 1.5;
   font-weight: 400;
 
   color-scheme: dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #060613;
+  color: #f8fafc;
+  background-color: #03030d;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -19,20 +28,18 @@
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-  background: radial-gradient(circle at center, #0e0e29 0%, #060613 100%);
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  width: 100vw;
+  height: 100dvh;
+  background: #03030d;
   overflow: hidden;
 }
 
 #root {
   width: 100%;
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 1rem;
-  text-align: center;
+  height: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 /* Animations */
@@ -61,38 +68,157 @@ body {
 }
 
 .animate-shake {
-  animation: shake 0.2s ease-in-out;
+  animation: shake 0.25s ease-in-out;
 }
 
-/* Custom Scrollbar for Sci-Fi panels */
+/* Glassmorphism Sci-Fi Panels */
+.glass-modal {
+  background: rgba(10, 11, 22, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(0, 240, 255, 0.15);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+}
+
+.glass-panel {
+  background: rgba(13, 14, 28, 0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.02);
+}
+
+.glass-panel-cyan {
+  background: rgba(0, 240, 255, 0.03);
+  border: 1.5px solid rgba(0, 240, 255, 0.25);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.05);
+}
+
+.glass-panel-purple {
+  background: rgba(186, 104, 200, 0.03);
+  border: 1.5px solid rgba(186, 104, 200, 0.2);
+  box-shadow: 0 0 15px rgba(186, 104, 200, 0.05);
+}
+
+/* Premium Sci-Fi Hologram Buttons */
+.scifi-btn-cyan {
+  background: rgba(0, 240, 255, 0.08);
+  border: 1.5px solid rgba(0, 240, 255, 0.4);
+  color: #00ffff;
+  font-family: var(--font-scifi);
+  text-shadow: 0 0 4px rgba(0, 240, 255, 0.5);
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.scifi-btn-cyan:hover {
+  background: rgba(0, 240, 255, 0.18);
+  border-color: rgba(0, 240, 255, 0.8);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+  transform: translateY(-1px);
+}
+.scifi-btn-cyan:active {
+  transform: translateY(0);
+}
+
+.scifi-btn-magenta {
+  background: rgba(255, 0, 85, 0.08);
+  border: 1.5px solid rgba(255, 0, 85, 0.4);
+  color: #ff0055;
+  font-family: var(--font-scifi);
+  text-shadow: 0 0 4px rgba(255, 0, 85, 0.5);
+  box-shadow: 0 0 8px rgba(255, 0, 85, 0.1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.scifi-btn-magenta:hover {
+  background: rgba(255, 0, 85, 0.18);
+  border-color: rgba(255, 0, 85, 0.8);
+  box-shadow: 0 0 15px rgba(255, 0, 85, 0.3);
+  transform: translateY(-1px);
+}
+.scifi-btn-magenta:active {
+  transform: translateY(0);
+}
+
+.scifi-btn-emerald {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1.5px solid rgba(16, 185, 129, 0.4);
+  color: #10b981;
+  font-family: var(--font-scifi);
+  text-shadow: 0 0 4px rgba(16, 185, 129, 0.5);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.scifi-btn-emerald:hover {
+  background: rgba(16, 185, 129, 0.18);
+  border-color: rgba(16, 185, 129, 0.8);
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+  transform: translateY(-1px);
+}
+.scifi-btn-emerald:active {
+  transform: translateY(0);
+}
+
+.scifi-btn-amber {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1.5px solid rgba(245, 158, 11, 0.4);
+  color: #f59e0b;
+  font-family: var(--font-scifi);
+  text-shadow: 0 0 4px rgba(245, 158, 11, 0.5);
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.scifi-btn-amber:hover {
+  background: rgba(245, 158, 11, 0.18);
+  border-color: rgba(245, 158, 11, 0.8);
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+  transform: translateY(-1px);
+}
+.scifi-btn-amber:active {
+  transform: translateY(0);
+}
+
+.scifi-btn-glass {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  color: #e2e8f0;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.scifi-btn-glass:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+.scifi-btn-glass:active {
+  transform: translateY(0);
+}
+
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.3);
-  border-radius: 99px;
+  background: rgba(10, 11, 22, 0.5);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(245, 64, 245, 0.2);
-  border-radius: 99px;
-  transition: background 0.2s;
+  background: rgba(0, 240, 255, 0.3);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(245, 64, 245, 0.5);
+  background: rgba(0, 240, 255, 0.6);
 }
 
 .glow-text-cyan {
-  text-shadow: 0 0 8px rgba(6, 182, 212, 0.5);
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
 }
 
 .glow-text-fuchsia {
-  text-shadow: 0 0 8px rgba(217, 70, 239, 0.5);
+  text-shadow: 0 0 8px rgba(255, 0, 245, 0.6);
 }
 
 .glow-text-emerald {
-  text-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+  text-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
 }

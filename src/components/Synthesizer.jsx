@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { baseMicrobes, combinedMicrobes, recipes, combine } from '../utils/recipes';
+import { MicrobeIcon } from './VectorIcons';
 
 export default function Synthesizer({ isOpen, onClose, microbes, onSynthesizeSuccess }) {
   const [slotA, setSlotA] = useState(null);
@@ -10,7 +11,6 @@ export default function Synthesizer({ isOpen, onClose, microbes, onSynthesizeSuc
   if (!isOpen) return null;
 
   // 우주 공간에 배치되어 합성 재료로 쓸 수 있는 미생물 리스트 필터링
-  // 현재 슬롯에 꽂힌 개체는 제외해야 함
   const availableMicrobes = microbes.filter(m => 
     (!slotA || m.id !== slotA.id) && 
     (!slotB || m.id !== slotB.id)
@@ -60,56 +60,48 @@ export default function Synthesizer({ isOpen, onClose, microbes, onSynthesizeSuc
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-3xl p-8 bg-slate-900 border-2 border-fuchsia-500 rounded-3xl shadow-3xl shadow-fuchsia-500/20 text-white flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 h-[100dvh] w-screen z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm animate-fade-in">
+      <div className="relative w-full max-w-3xl p-8 glass-modal rounded-3xl text-slate-100 flex flex-col max-h-[90vh] overflow-hidden">
         
         {/* 모달 닫기 */}
         <button 
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-fuchsia-400 transition-colors text-2xl"
+          className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center bg-red-500/20 hover:bg-red-500/40 text-red-300 border border-red-500/35 rounded-xl cursor-pointer transition-all text-lg font-bold font-scifi"
         >
           ✕
         </button>
 
         {/* 타이틀 */}
         <div className="flex items-center gap-3 mb-6">
-          <span className="px-3 py-1 bg-fuchsia-950/60 border border-fuchsia-500/50 rounded-full text-xs font-semibold text-fuchsia-400 uppercase tracking-widest font-mono">
-            합성 연구소
+          <span className="px-3.5 py-1 bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 rounded-full text-xs font-bold uppercase tracking-wider font-scifi">
+            SYNTHESIZER
           </span>
-          <h2 className="text-xl font-bold text-fuchsia-100 font-mono">성간 생명 합성 융합기</h2>
+          <h2 className="text-lg font-bold text-slate-100 font-scifi">성간 생명 합성 융합기</h2>
         </div>
 
         {/* 융합기 핵심 영역 (슬롯 및 합성 버튼) */}
-        <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-6 mb-6">
-          <div className="flex items-center justify-center gap-10">
+        <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 mb-6 shadow-inner">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8">
             {/* 슬롯 A */}
             <div className="text-center">
               <div 
                 onClick={() => slotA && handleClearSlot('A')}
-                className={`w-28 h-28 border-2 ${slotA ? 'border-fuchsia-500 bg-fuchsia-950/20 cursor-pointer hover:bg-fuchsia-950/40' : 'border-dashed border-slate-700 bg-slate-900'} rounded-2xl flex flex-col items-center justify-center transition-all`}
+                className={`w-28 h-28 border ${slotA ? 'border-cyan-500/40 bg-cyan-500/5 cursor-pointer hover:bg-cyan-500/10' : 'border-dashed border-slate-800 bg-slate-950/40'} rounded-2xl flex flex-col items-center justify-center transition-all`}
               >
                 {slotA ? (
                   <>
-                    <span className="text-4xl filter drop-shadow-[0_0_8px_rgba(245,64,245,0.5)] block mb-1">
-                      {slotA.name === '버섯' && '🍄'}
-                      {slotA.name === '곰팡이' && '🦠'}
-                      {slotA.name === '짚신벌레' && '🥿'}
-                      {slotA.name === '아메바' && '🧬'}
-                      {slotA.name === '해캄' && '🌿'}
-                      {slotA.name === '대장균' && '🧪'}
-                      {slotA.name === '젖산균' && '🥛'}
-                    </span>
-                    <span className="text-xs font-mono font-bold text-fuchsia-300">{slotA.name}</span>
-                    <span className="text-[10px] text-slate-400 font-mono">클릭해 제거</span>
+                    <MicrobeIcon name={slotA.name} className="w-14 h-14 mb-1" glowColor={slotA.glowColor} />
+                    <span className="text-xs font-bold text-slate-200">{slotA.name}</span>
+                    <span className="text-[8px] text-slate-500 font-mono">제거하기</span>
                   </>
                 ) : (
-                  <span className="text-slate-500 font-mono text-sm">재료 슬롯 A</span>
+                  <span className="text-slate-600 font-mono text-[10px] tracking-wider">SLOT A</span>
                 )}
               </div>
             </div>
 
             {/* 융합 기호 */}
-            <div className="text-3xl text-fuchsia-500 font-bold font-mono animate-pulse">
+            <div className="text-2xl text-cyan-400 font-bold font-scifi animate-pulse">
               +
             </div>
 
@@ -117,30 +109,22 @@ export default function Synthesizer({ isOpen, onClose, microbes, onSynthesizeSuc
             <div className="text-center">
               <div 
                 onClick={() => slotB && handleClearSlot('B')}
-                className={`w-28 h-28 border-2 ${slotB ? 'border-fuchsia-500 bg-fuchsia-950/20 cursor-pointer hover:bg-fuchsia-950/40' : 'border-dashed border-slate-700 bg-slate-900'} rounded-2xl flex flex-col items-center justify-center transition-all`}
+                className={`w-28 h-28 border ${slotB ? 'border-cyan-500/40 bg-cyan-500/5 cursor-pointer hover:bg-cyan-500/10' : 'border-dashed border-slate-800 bg-slate-950/40'} rounded-2xl flex flex-col items-center justify-center transition-all`}
               >
                 {slotB ? (
                   <>
-                    <span className="text-4xl filter drop-shadow-[0_0_8px_rgba(245,64,245,0.5)] block mb-1">
-                      {slotB.name === '버섯' && '🍄'}
-                      {slotB.name === '곰팡이' && '🦠'}
-                      {slotB.name === '짚신벌레' && '🥿'}
-                      {slotB.name === '아메바' && '🧬'}
-                      {slotB.name === '해캄' && '🌿'}
-                      {slotB.name === '대장균' && '🧪'}
-                      {slotB.name === '젖산균' && '🥛'}
-                    </span>
-                    <span className="text-xs font-mono font-bold text-fuchsia-300">{slotB.name}</span>
-                    <span className="text-[10px] text-slate-400 font-mono">클릭해 제거</span>
+                    <MicrobeIcon name={slotB.name} className="w-14 h-14 mb-1" glowColor={slotB.glowColor} />
+                    <span className="text-xs font-bold text-slate-200">{slotB.name}</span>
+                    <span className="text-[8px] text-slate-500 font-mono">제거하기</span>
                   </>
                 ) : (
-                  <span className="text-slate-500 font-mono text-sm">재료 슬롯 B</span>
+                  <span className="text-slate-600 font-mono text-[10px] tracking-wider">SLOT B</span>
                 )}
               </div>
             </div>
 
             {/* 가리키는 화살표 */}
-            <div className="text-3xl text-fuchsia-500 font-bold font-mono">
+            <div className="text-2xl text-cyan-400 font-bold font-scifi hidden sm:block">
               →
             </div>
 
@@ -148,107 +132,91 @@ export default function Synthesizer({ isOpen, onClose, microbes, onSynthesizeSuc
             <button
               onClick={handleSynthesize}
               disabled={!slotA || !slotB}
-              className={`px-8 py-5 rounded-2xl font-bold font-mono text-lg transition-all shadow-lg ${
+              className={`px-6 py-4 rounded-xl font-bold font-scifi text-sm transition-all cursor-pointer ${
                 slotA && slotB 
-                  ? 'bg-fuchsia-500 hover:bg-fuchsia-400 text-slate-950 shadow-fuchsia-500/20 hover:scale-105' 
-                  : 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
+                  ? 'scifi-btn-emerald' 
+                  : 'bg-slate-900 text-slate-600 border border-slate-800 cursor-not-allowed opacity-40'
               }`}
             >
-              융합 합성하기
+              FUSE LIFEFORM
             </button>
           </div>
 
           {/* 에러 메시지 */}
           {errorMsg && (
-            <div className="mt-4 text-center text-sm font-mono text-rose-400 animate-shake">
+            <div className="mt-4 text-center text-xs font-bold text-red-400 animate-shake">
               ⚠ {errorMsg}
             </div>
           )}
         </div>
 
         {/* 인벤토리 목록 (내 우주 생물 중 선택 가능) */}
-        <h3 className="text-sm font-mono text-slate-400 mb-3">
-          보유 중인 미생물 목록 (합성에 등록할 생물을 선택하세요)
+        <h3 className="text-[10px] font-bold text-slate-500 mb-3 uppercase tracking-wider font-scifi">
+          AVAILABLE LAB SPECIMENS (합성 재료 선택)
         </h3>
         
-        <div className="flex-1 overflow-y-auto bg-slate-950/40 border border-slate-800 rounded-2xl p-4 mb-4 grid grid-cols-4 gap-3 max-h-[300px]">
+        <div className="flex-1 overflow-y-auto bg-slate-950/40 border border-slate-800 rounded-2xl p-4 mb-4 grid grid-cols-2 sm:grid-cols-4 gap-3 max-h-[260px] shadow-inner">
           {availableMicrobes.length === 0 ? (
-            <div className="col-span-4 flex items-center justify-center h-28 text-slate-500 font-mono">
-              합성에 사용할 수 있는 여분의 미생물이 없습니다. (퀴즈를 통해 더 소환하세요!)
+            <div className="col-span-4 flex items-center justify-center h-28 text-slate-600 font-mono text-xs">
+              합성에 사용할 수 있는 여분의 미생물이 없습니다. (연구실 퀴즈로 소환하세요!)
             </div>
           ) : (
             availableMicrobes.map((m, idx) => (
               <div
                 key={m.id || idx}
                 onClick={() => handleSelectMicrobe(m)}
-                className="p-3 bg-slate-800/60 border border-slate-700 hover:border-fuchsia-400 rounded-xl cursor-pointer hover:bg-slate-800 transition-all text-center flex flex-col items-center justify-center gap-1"
+                className="p-3 bg-slate-900/60 border border-slate-700 hover:border-cyan-500 rounded-xl cursor-pointer hover:bg-slate-800/80 transition-all text-center flex flex-col items-center justify-center gap-1 shadow-sm text-slate-200"
               >
-                <span className="text-3xl block mb-1">
-                  {m.name === '버섯' && '🍄'}
-                  {m.name === '곰팡이' && '🦠'}
-                  {m.name === '짚신벌레' && '🥿'}
-                  {m.name === '아메바' && '🧬'}
-                  {m.name === '해캄' && '🌿'}
-                  {m.name === '대장균' && '🧪'}
-                  {m.name === '젖산균' && '🥛'}
-                </span>
-                <span className="text-xs font-mono font-semibold text-slate-100">{m.name}</span>
-                <span className="text-[9px] text-fuchsia-400 font-mono uppercase tracking-wider">{m.type}</span>
+                <MicrobeIcon name={m.name} className="w-10 h-10 mb-1" glowColor={m.glowColor} />
+                <span className="text-xs font-bold text-slate-200">{m.name}</span>
+                <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: m.glowColor }}>{m.type}</span>
               </div>
             ))
           )}
         </div>
 
         {/* 레시피 도감 안내 가이드 */}
-        <div className="bg-slate-950/20 border border-slate-800/80 rounded-xl p-3">
-          <p className="text-xs text-slate-400 font-mono">
-            ℹ <strong>합성 힌트:</strong> 
-            [버섯 + 버섯], [곰팡이 + 곰팡이], [버섯 + 곰팡이], [짚신벌레 + 짚신벌레], [아메바 + 아메바], [해캄 + 아메바]
+        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-3 select-none">
+          <p className="text-[10px] text-slate-400 text-center font-mono">
+            ℹ <strong>MUTATION RECIPES:</strong> [버섯+버섯] ➔ 화산 버섯 | [곰팡이+곰팡이] ➔ 네온 곰팡이 | [버섯+곰팡이] ➔ 포자버섯 젤리 | [짚신벌레+짚신벌레] ➔ 제트 짚신벌레 | [아메바+아메바] ➔ 블랙홀 아메바 | [해캄+아메바] ➔ 우주 태양 아메바
           </p>
         </div>
 
         {/* 합성 성공 팝업 오버레이 */}
         {synthesizeResult && (
-          <div className="absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-center rounded-3xl p-8 z-10 animate-fade-in">
+          <div className="absolute inset-0 bg-[#070814] flex flex-col items-center justify-center rounded-3xl p-8 z-10 animate-fade-in border-2 border-cyan-500/30">
             {/* 찬란한 네온 효과 */}
-            <div className="w-32 h-32 rounded-full bg-fuchsia-500/10 border-4 border-fuchsia-500 flex items-center justify-center shadow-2xl shadow-fuchsia-500/50 mb-6 animate-bounce">
-              <span className="text-7xl filter drop-shadow-[0_0_15px_rgba(245,64,245,0.7)]">
-                {synthesizeResult.name === '화산 버섯' && '🌋'}
-                {synthesizeResult.name === '네온 곰팡이' && '💎'}
-                {synthesizeResult.name === '포자버섯 젤리' && '🔮'}
-                {synthesizeResult.name === '제트 짚신벌레' && '🚀'}
-                {synthesizeResult.name === '블랙홀 아메바' && '🌀'}
-                {synthesizeResult.name === '우주 태양 아메바' && '☀'}
-              </span>
+            <div className="w-32 h-32 rounded-full bg-cyan-500/10 border-2 border-cyan-500 flex items-center justify-center shadow-2xl shadow-cyan-500/30 mb-6 animate-bounce">
+              <MicrobeIcon name={synthesizeResult.name} className="w-20 h-20" glowColor={synthesizeResult.glowColor} />
             </div>
             
-            <span className="text-xs font-mono text-fuchsia-400 uppercase tracking-widest mb-1">
-              신종 생명체 탄생 성공!
+            <span className="text-[10px] font-mono font-bold text-cyan-400 uppercase tracking-widest mb-1 font-scifi">
+              MUTATION SYNTHESIS SUCCESS
             </span>
-            <h3 className="text-3xl font-black text-white font-mono mb-4">
+            <h3 className="text-2xl font-bold text-slate-100 font-scifi mb-4">
               [{synthesizeResult.name}]
             </h3>
             
-            <p className="text-center text-slate-300 max-w-md mb-6 leading-relaxed text-sm">
+            <p className="text-center text-slate-300 max-w-md mb-6 leading-relaxed text-xs">
               {synthesizeResult.description}
             </p>
 
-            <div className="flex gap-10 text-center mb-8 border-t border-b border-slate-800 py-3 w-full max-w-sm justify-around font-mono">
+            <div className="flex gap-10 text-center mb-8 border-t border-b border-slate-800 py-3.5 w-full max-w-sm justify-around font-mono">
               <div>
-                <span className="block text-slate-500 text-xs">수집 속도</span>
+                <span className="block text-slate-500 text-[10px] font-semibold">수집 속도</span>
                 <span className="text-emerald-400 font-bold text-lg">x{synthesizeResult.miningSpeed}</span>
               </div>
               <div>
-                <span className="block text-slate-500 text-xs">에너지 용량</span>
+                <span className="block text-slate-500 text-[10px] font-semibold">에너지 용량</span>
                 <span className="text-cyan-400 font-bold text-lg">{synthesizeResult.capacity}</span>
               </div>
             </div>
 
             <button
               onClick={handleCloseSuccessPopup}
-              className="px-8 py-3 bg-fuchsia-500 hover:bg-fuchsia-400 text-slate-950 font-bold font-mono rounded-xl shadow-lg shadow-fuchsia-500/20 transition-all hover:scale-105"
+              className="px-8 py-3 scifi-btn-cyan rounded-xl text-xs font-bold cursor-pointer transition-all"
             >
-              우주로 방출하기
+              RELEASE INTO COSMOS
             </button>
           </div>
         )}
