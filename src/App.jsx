@@ -194,8 +194,8 @@ export default function App() {
       capacity: template.capacity,
       avatarSvg: template.avatarSvg,
       // 우주 소환 위치 (중앙 수집기 포탈(2000, 1500)에서 뿅 하고 튀어나오게 설정)
-      x: 4000 + (Math.random() - 0.5) * 20,
-      y: 3000 + (Math.random() - 0.5) * 20,
+      x: 4000 + (Math.random() - 0.5) * 240, // ±120px 범위로 대폭 확장하여 기지 내에 골고루 분산
+      y: 3000 + (Math.random() - 0.5) * 240,
       vx: (Math.random() - 0.5) * 4,
       vy: (Math.random() - 0.5) * 4,
       state: 'mining',
@@ -237,8 +237,8 @@ export default function App() {
         miningSpeed: template.miningSpeed,
         capacity: template.capacity,
         avatarSvg: template.avatarSvg,
-        x: 4000, // 포탈 중심에서 소환
-        y: 3000,
+        x: 4000 + (Math.random() - 0.5) * 240, // ±120px 범위로 골고루 분산 소환
+        y: 3000 + (Math.random() - 0.5) * 240,
         vx: (Math.random() - 0.5) * 3,
         vy: (Math.random() - 0.5) * 3,
         state: 'mining',

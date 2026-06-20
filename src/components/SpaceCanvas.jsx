@@ -642,9 +642,32 @@ export default function SpaceCanvas({
             } else {
               // 행성 도착 및 주변 공전 대기
               vx = (Math.random() - 0.5) * 0.3;
-              vy = (Math.random() - 0.5) * 0.3;
             }
           }
+        }
+
+        // 1. Separation (미생물 간 척력): 겹침 방지 및 자연스러운 무리 퍼짐 유도
+        let repX = 0;
+        let repY = 0;
+        microbesRef.current.forEach(other => {
+          if (other.id === m.id) return;
+          const dx = x - other.x;
+          const dy = y - other.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const minSep = 35; // 서로 유지할 최소 격리 거리 (픽셀 단위)
+          if (dist < minSep && dist > 0) {
+            const force = (minSep - dist) / minSep; // 거리가 가까울수록 더 강한 반발력
+            repX += (dx / dist) * force * 0.25;
+            repY += (dy / dist) * force * 0.25;
+          }
+        });
+        vx += repX;
+        vy += repY;
+
+        // 3. Wiggle Noise (무작위 헤엄 흔들림): 한 방향 일직선 헤엄을 깨뜨리기 위한 섭동 추가
+        if (state !== 'expedition') {
+          vx += (Math.random() - 0.5) * 0.12;
+          vy += (Math.random() - 0.5) * 0.12;
         }
 
         // 물리 마찰
