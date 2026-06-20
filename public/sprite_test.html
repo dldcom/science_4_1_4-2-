@@ -71,6 +71,27 @@
   <div class="grid" id="grid"></div>
 
   <script>
+    const nameMap = {
+      '0,0': '버섯',
+      '0,1': '곰팡이',
+      '0,2': '이스트',
+      '0,3': '누룩곰팡이',
+      '1,0': '짚신벌레',
+      '1,1': '아메바',
+      '1,2': '해캄',
+      '2,0': '대장균',
+      '2,1': '젖산균',
+      '2,2': '고초균',
+      '2,3': '아세트산균',
+      '3,0': '화산 버섯',
+      '3,1': '네온 곰팡이',
+      '3,2': '포자버섯 젤리',
+      '3,3': '제트 짚신벌레',
+      '3,4': '블랙홀 아메바',
+      '4,0': '우주 태양 아메바',
+      '4,1': '메가 이스트'
+    };
+
     const grid = document.getElementById('grid');
     for (let r = 0; r < 5; r++) {
       for (let c = 0; c < 5; c++) {
@@ -82,13 +103,16 @@
         // 5 columns/rows means 0%, 25%, 50%, 75%, 100% position mapping
         sprite.style.backgroundPosition = `${c * 25}% ${r * 25}%`;
         
+        const key = `${r},${c}`;
+        const name = nameMap[key] || '미사용 / 빈 칸';
+        
         const label = document.createElement('div');
         label.className = 'coord';
-        label.innerText = `Row ${r}, Col ${c}`;
+        label.innerText = name;
         
         const hint = document.createElement('div');
         hint.className = 'hint';
-        hint.innerText = `(${r}, ${c})`;
+        hint.innerText = `Row ${r}, Col ${c} (${r}, ${c})`;
         
         cell.appendChild(sprite);
         cell.appendChild(label);
