@@ -520,65 +520,56 @@ export default function SpaceCanvas({
         const maxY = 3000 + tankHeight / 2;
 
         if (state === 'mining') {
-          // 연못 안의 유기 영양분 탐색 및 섭취 로직
-          let targetNutrient = null;
-          let minDist = Infinity;
-          
-          nutrientsRef.current.forEach(nut => {
+          // 물속을 부드럽게 둥둥 떠다니는 무작위 표류(Drift) 물리 작용
+          // 개체의 고유 speed 속성과 깡총 인자(hopFactor)를 기반으로 매 프레임 무작위 방향 흔들림 가속
+          vx += (Math.random() - 0.5) * 0.14 * speed * hopFactor;
+          vy += (Math.random() - 0.5) * 0.14 * speed * hopFactor;
+
+          // 부유 운동 중 주변 영양분에 가까이 닿았는지(16px 이하) 검증
+          let touchedNutrient = null;
+          for (let i = 0; i < nutrientsRef.current.length; i++) {
+            const nut = nutrientsRef.current[i];
             const d = Math.sqrt(Math.pow(nut.x - x, 2) + Math.pow(nut.y - y, 2));
-            if (d < minDist) {
-              minDist = d;
-              targetNutrient = nut;
+            if (d <= 16) {
+              touchedNutrient = nut;
+              break;
             }
-          });
+          }
 
-          if (targetNutrient) {
-            const dx = targetNutrient.x - x;
-            const dy = targetNutrient.y - y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
+          if (touchedNutrient) {
+            // 영양분 먹기 성공
+            nutrientsRef.current = nutrientsRef.current.filter(n => n.id !== touchedNutrient.id);
+            
+            energyCurrent += energyCapacity * 0.25; // 25% 충전
+            if (energyCurrent >= energyCapacity) {
+              energyCurrent = energyCapacity;
+              state = 'returning';
+            }
 
-            if (dist > 12) {
-              vx += (dx / dist) * 0.16 * speed * hopFactor;
-              vy += (dy / dist) * 0.16 * speed * hopFactor;
-            } else {
-              // 영양분 먹기 성공
-              nutrientsRef.current = nutrientsRef.current.filter(n => n.id !== targetNutrient.id);
-              
-              energyCurrent += energyCapacity * 0.25; // 25% 충전
-              if (energyCurrent >= energyCapacity) {
-                energyCurrent = energyCapacity;
-                state = 'returning';
-              }
+            textPopupsRef.current.push({
+              x: x,
+              y: y - 12,
+              text: "+1 Bio",
+              color: m.glowColor || '#ffca28',
+              alpha: 1.0,
+              life: 40
+            });
 
-              textPopupsRef.current.push({
+            // 먹기 이펙트 먼지 불꽃 추가
+            for (let i = 0; i < 5; i++) {
+              const angleVal = Math.random() * Math.PI * 2;
+              const pSpeed = 0.5 + Math.random() * 1.5;
+              particlesRef.current.push({
                 x: x,
-                y: y - 12,
-                text: "+1 Bio",
-                color: m.glowColor || '#ffca28',
-                alpha: 1.0,
-                life: 40
+                y: y,
+                vx: Math.cos(angleVal) * pSpeed,
+                vy: Math.sin(angleVal) * pSpeed,
+                color: '#ffca28',
+                size: 2 + Math.floor(Math.random() * 2),
+                life: 15 + Math.floor(Math.random() * 8),
+                isPixelStar: true
               });
-
-              // 먼지 불꽃 이펙트
-              for (let i = 0; i < 5; i++) {
-                const angleVal = Math.random() * Math.PI * 2;
-                const pSpeed = 0.5 + Math.random() * 1.5;
-                particlesRef.current.push({
-                  x: x,
-                  y: y,
-                  vx: Math.cos(angleVal) * pSpeed,
-                  vy: Math.sin(angleVal) * pSpeed,
-                  color: '#ffca28',
-                  size: 2 + Math.floor(Math.random() * 2),
-                  life: 15 + Math.floor(Math.random() * 8),
-                  isPixelStar: true
-                });
-              }
             }
-          } else {
-            // 영양분이 없을 땐 랜덤 표류
-            vx += (Math.random() - 0.5) * 0.08;
-            vy += (Math.random() - 0.5) * 0.08;
           }
 
           // 자연 채굴량 축적
