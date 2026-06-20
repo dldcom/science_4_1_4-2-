@@ -492,24 +492,8 @@ export default function SpaceCanvas({
 
     // 4. 물리 시뮬레이션 계산
     const updatePhysics = () => {
-      const time = timeRef.current;
       microbesRef.current = microbesRef.current.map(m => {
-        let { x, y, vx, vy, state, targetX, targetY, energyCurrent, energyCapacity, speed, targetNebulaId, type, name, targetPlanetId } = m;
-        
-        // 깡총깡총 피칭 움직임 비율 계산
-        const uniqueOffset = parseInt((m.id || '0').split('-')[0]) % 100 || 0;
-        const cycle = (time + uniqueOffset) % 60;
-        let hopFactor = 1.0;
-        
-        if (type !== 'mold' && type !== 'mushroom' && type !== 'spore_jelly' && type !== 'koji_mold') {
-          if (cycle < 15) {
-            hopFactor = 2.2 * Math.sin((cycle / 15) * Math.PI);
-          } else if (cycle < 45) {
-            hopFactor = 0.5 * Math.cos(((cycle - 15) / 30) * (Math.PI / 2));
-          } else {
-            hopFactor = 0.05;
-          }
-        }
+        let { x, y, vx, vy, state, targetX, targetY, energyCurrent, energyCapacity, speed, targetNebulaId, type, name, targetPlanetId, angle } = m;
         
         // 중앙 배양조 물리 영역 설정
         const tankWidth = 800;
@@ -520,12 +504,21 @@ export default function SpaceCanvas({
         const maxY = 3000 + tankHeight / 2;
 
         if (state === 'mining') {
-          // 물속을 부드럽게 둥둥 떠다니는 무작위 표류(Drift) 물리 작용
-          // 개체의 고유 speed 속성과 깡총 인자(hopFactor)를 기반으로 매 프레임 무작위 방향 흔들림 가속
-          vx += (Math.random() - 0.5) * 0.14 * speed * hopFactor;
-          vy += (Math.random() - 0.5) * 0.14 * speed * hopFactor;
+          // 물속을 부드럽게 유영하며 둥둥 떠다니는 Smooth Steering Wander 물리 작용
+          // 매 프레임 무작위 가속도를 더하는 대신, 고유 각도(angle)를 미세하게 조향하여 떨림 현상 완전 차단
+          let curAngle = (angle === undefined || isNaN(angle)) ? Math.random() * Math.PI * 2 : angle;
+          curAngle += (Math.random() - 0.5) * 0.08; // 프레임당 약 ±2.3도씩 미세 각도 조향
+          
+          // 각도 방향으로 부드럽게 활주 (너무 미친듯이 돌거나 떨리는 가속 방지)
+          const targetVx = Math.cos(curAngle) * 0.6 * speed;
+          const targetVy = Math.sin(curAngle) * 0.6 * speed;
+          
+          // 현재 속도에서 타겟 부유 속도로 부드럽게 완충(Lerp)
+          vx = vx * 0.92 + targetVx * 0.08;
+          vy = vy * 0.92 + targetVy * 0.08;
+          angle = curAngle;
 
-          // 부유 운동 중 주변 영양분에 가까이 닿았는지(16px 이하) 검증
+          // 부유 유영 중에 주변 영양분에 가까이 닿았는지(16px 이하) 검증
           let touchedNutrient = null;
           for (let i = 0; i < nutrientsRef.current.length; i++) {
             const nut = nutrientsRef.current[i];
@@ -579,7 +572,7 @@ export default function SpaceCanvas({
             state = 'returning';
           }
         } else if (state === 'returning') {
-          // 중앙 포탈로 복귀 및 에너지 납품
+          // 중앙 포탈로 복귀 및 에너지 납품 (복귀 시에는 일정한 속도로 복귀하도록 깡총거림 제거)
           const dx = collector.x - x;
           const dy = collector.y - y;
           const dist = Math.sqrt(dx * dx + dy * dy);
@@ -616,8 +609,8 @@ export default function SpaceCanvas({
             energyCurrent = 0;
             state = 'mining';
           } else {
-            vx = (dx / dist) * 3.2 * speed * hopFactor;
-            vy = (dy / dist) * 3.2 * speed * hopFactor;
+            vx = (dx / dist) * 1.8 * speed;
+            vy = (dy / dist) * 1.8 * speed;
           }
         } else if (state === 'expedition') {
           // 원정 파견: 해당 식품 행성으로 비행
@@ -655,12 +648,6 @@ export default function SpaceCanvas({
         vx += repX;
         vy += repY;
 
-        // 3. Wiggle Noise (무작위 헤엄 흔들림): 한 방향 일직선 헤엄을 깨뜨리기 위한 섭동 추가
-        if (state !== 'expedition') {
-          vx += (Math.random() - 0.5) * 0.12;
-          vy += (Math.random() - 0.5) * 0.12;
-        }
-
         // 물리 마찰
         if (state === 'expedition') {
           vx *= 0.98;
@@ -694,7 +681,9 @@ export default function SpaceCanvas({
           if (y > maxY - margin) { y = maxY - margin; vy *= -0.5; }
         }
 
-        let angle = Math.atan2(vy, vx);
+        if (state === 'expedition' || Math.sqrt(vx * vx + vy * vy) > 0.05) {
+          angle = Math.atan2(vy, vx);
+        }
         if (state !== 'expedition' && (type === 'mold' || type === 'mushroom' || type === 'spore_jelly' || type === 'koji_mold')) {
           angle = -Math.PI / 2;
         }
