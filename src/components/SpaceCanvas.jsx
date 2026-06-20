@@ -25,7 +25,11 @@ const spriteMapping = {
 // 미생물 모양을 그리거나 이미지 스프라이트를 렌더링하는 함수
 const drawMicrobe = (ctx, type, name, x, y, size, angle, state, glowColor, time, focusMode, spritesheetImg) => {
   ctx.save();
-  ctx.translate(x, y);
+  let offsetY = 0;
+  if (state !== 'expedition' && (type === 'mushroom' || type === 'mold' || type === 'spore_jelly' || type === 'koji_mold')) {
+    offsetY = Math.sin(time * 0.06 + (x % 77)) * 3; // 찰랑거리는 개별 위상 오프셋
+  }
+  ctx.translate(x, y + offsetY);
 
   // 1. Stardew Valley 스타일 식물/균류형 흔들림 효과 (Wobble)
   if (type === 'mushroom' || type === 'mold' || type === 'spore_jelly' || type === 'spirogyra' || type === 'koji_mold') {
@@ -504,18 +508,27 @@ export default function SpaceCanvas({
         const maxY = 3000 + tankHeight / 2;
 
         if (state === 'mining') {
-          // 물속을 부드럽게 유영하며 둥둥 떠다니는 Smooth Steering Wander 물리 작용
-          // 매 프레임 무작위 가속도를 더하는 대신, 고유 각도(angle)를 미세하게 조향하여 떨림 현상 완전 차단
+          // 물속을 둥둥 떠다니는 현실적인 Pulse-Glide (추진 후 관성 미끄러짐) 물리 시뮬레이션
+          // 200프레임(약 3.3초) 주기로 꼬리를 저어 슉 나아간 뒤, 나머지 시간 동안은 관성으로 유유히 흐름
+          const uniqueOffset = parseInt((m.id || '0').split('-')[0]) % 100 || 0;
+          const cycle = (timeRef.current + uniqueOffset) % 200;
           let curAngle = (angle === undefined || isNaN(angle)) ? Math.random() * Math.PI * 2 : angle;
-          curAngle += (Math.random() - 0.5) * 0.08; // 프레임당 약 ±2.3도씩 미세 각도 조향
-          
-          // 각도 방향으로 부드럽게 활주 (너무 미친듯이 돌거나 떨리는 가속 방지)
-          const targetVx = Math.cos(curAngle) * 0.6 * speed;
-          const targetVy = Math.sin(curAngle) * 0.6 * speed;
-          
-          // 현재 속도에서 타겟 부유 속도로 부드럽게 완충(Lerp)
-          vx = vx * 0.92 + targetVx * 0.08;
-          vy = vy * 0.92 + targetVy * 0.08;
+
+          if (cycle < 12) {
+            // 펄스 추진 시작 프레임일 때 나아갈 각도를 임의로 조향
+            if (cycle === 0) {
+              curAngle += (Math.random() - 0.5) * 1.8; // 방향을 크게 전환
+            }
+            // 펄스 추진력 가중치 (사인파를 그리며 슉 밀어줌)
+            const pushForce = 2.5 * speed * Math.sin((cycle / 12) * Math.PI);
+            vx += Math.cos(curAngle) * pushForce * 0.28;
+            vy += Math.sin(curAngle) * pushForce * 0.28;
+          } else {
+            // 관성 표류(Glide) 구간: 추가 동력 없이 미끄러지며, 물결에 의해 미세하게 흔들림만 적용
+            curAngle += (Math.random() - 0.5) * 0.012;
+            vx += Math.cos(curAngle) * 0.006;
+            vy += Math.sin(curAngle) * 0.006;
+          }
           angle = curAngle;
 
           // 부유 유영 중에 주변 영양분에 가까이 닿았는지(16px 이하) 검증
@@ -648,19 +661,19 @@ export default function SpaceCanvas({
         vx += repX;
         vy += repY;
 
-        // 물리 마찰
+        // 물리 마찰 (마찰력을 줄여 관성 미끄러짐(Glide) 효과 대폭 상승)
         if (state === 'expedition') {
           vx *= 0.98;
           vy *= 0.98;
         } else {
-          vx *= 0.95;
-          vy *= 0.95;
+          vx *= 0.975;
+          vy *= 0.975;
         }
 
-        // 식물/균류형(버섯, 곰팡이 등)은 기어가는 속도 대폭 조절
+        // 식물/균류형(버섯, 곰팡이 등)은 기어 다니지 않고 제자리에 완전히 고착
         if (state !== 'expedition' && (type === 'mold' || type === 'mushroom' || type === 'spore_jelly' || type === 'koji_mold')) {
-          vx *= 0.1;
-          vy *= 0.1;
+          vx = 0;
+          vy = 0;
         }
 
         x += vx;
@@ -703,6 +716,10 @@ export default function SpaceCanvas({
       const maxY = 3000 + tankHeight / 2;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.imageSmoothingEnabled = false;
+      ctx.mozImageSmoothingEnabled = false;
+      ctx.webkitImageSmoothingEnabled = false;
+      ctx.msImageSmoothingEnabled = false;
 
       // 카메라 오프셋 적용 시작
       ctx.save();
