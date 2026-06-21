@@ -110,13 +110,8 @@
         label.className = 'coord';
         label.innerText = name;
         
-        const hint = document.createElement('div');
-        hint.className = 'hint';
-        hint.innerText = `Row ${r}, Col ${c} (${r}, ${c})`;
-        
         cell.appendChild(sprite);
         cell.appendChild(label);
-        cell.appendChild(hint);
         grid.appendChild(cell);
       }
     }

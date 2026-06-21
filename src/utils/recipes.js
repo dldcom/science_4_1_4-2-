@@ -5,7 +5,7 @@ export const baseMicrobes = {
     type: '균류',
     tier: 1,
     glowColor: '#ff7b00',
-    description: '실 모양의 균사로 유기물을 분해하여 흡수합니다. 영양이 차면 갓을 피웁니다.',
+    description: '식물처럼 보이지만 스스로 양분을 못 만들어서 죽은 나무 등에서 양분을 얻고 살아요. 머리(갓)와 몸통(자루)으로 이루어져 있어요.',
     miningSpeed: 1.0,
     capacity: 10,
     avatarSvg: 'mushroom'
@@ -15,7 +15,7 @@ export const baseMicrobes = {
     type: '균류',
     tier: 1,
     glowColor: '#00ff66',
-    description: '음식물이나 습한 곳에 균사를 뻗고 자라며 포자낭을 터뜨려 번식합니다.',
+    description: '빵이나 과일이 썩을 때 생기는 솜털 같은 생물이에요. 눈에 보이지 않는 아주 작은 씨앗(포자)을 날려 번식해요.',
     miningSpeed: 0.8,
     capacity: 12,
     avatarSvg: 'mold'
@@ -25,7 +25,7 @@ export const baseMicrobes = {
     type: '원생생물',
     tier: 1,
     glowColor: '#00ffff',
-    description: '짚신 모양의 단세포 생물로, 온몸에 돋아난 섬모를 움직여 빠르게 헤엄칩니다.',
+    description: '몸이 짚신 모양처럼 생겨서 짚신벌레라고 불려요! 몸에 아주 작은 털(섬모)들이 나 있어서 물속을 슉슉 헤엄칠 수 있어요.',
     miningSpeed: 1.2,
     capacity: 8,
     avatarSvg: 'paramecium'
@@ -35,7 +35,7 @@ export const baseMicrobes = {
     type: '원생생물',
     tier: 1,
     glowColor: '#ff00ff',
-    description: '일정한 모양이 없고 위족(거짓발)을 늘려 느릿하게 움직이며 먹이를 포식합니다.',
+    description: '몸의 모양이 정해져 있지 않고 젤리처럼 쭈욱쭈욱 변해요. 가짜 발(위족)을 뻗어서 먹이를 쏙 감싸서 먹는답니다.',
     miningSpeed: 0.6,
     capacity: 20,
     avatarSvg: 'amoeba'
@@ -45,7 +45,7 @@ export const baseMicrobes = {
     type: '원생생물',
     tier: 1,
     glowColor: '#adff2f',
-    description: '대나무처럼 마디가 있는 녹조류로, 마디 속 나선 모양의 엽록체에서 광합성을 합니다.',
+    description: '물속에 사는 초록색 실 모양의 생물이에요. 돋보기로 보면 대나무처럼 마디가 있고, 식물처럼 햇빛을 받아 스스로 양분을 만들어요.',
     miningSpeed: 1.5,
     capacity: 5,
     avatarSvg: 'spirogyra'
@@ -55,7 +55,7 @@ export const baseMicrobes = {
     type: '세균',
     tier: 1,
     glowColor: '#ff0055',
-    description: '인간의 대장에 살며 구조가 매우 단순한 막대 모양(간균) 세균입니다.',
+    description: '우리 몸속(대장)이나 자연에 널리 퍼져 사는 막대기 모양의 작은 세균이에요. 크기가 너무 작아서 현미경으로만 볼 수 있어요.',
     miningSpeed: 1.1,
     capacity: 6,
     avatarSvg: 'e_coli'
@@ -65,7 +65,7 @@ export const baseMicrobes = {
     type: '세균',
     tier: 1,
     glowColor: '#ffff00',
-    description: '요구르트나 김치 등 발효 식품에 이로운 도움을 주는 동그란 구균 세균입니다.',
+    description: '우리가 좋아하는 요구르트나 김치를 맛있게 발효시켜 주는 아주 착하고 고마운 세균이에요.',
     miningSpeed: 0.9,
     capacity: 8,
     avatarSvg: 'lactobacillus'
@@ -75,7 +75,7 @@ export const baseMicrobes = {
     type: '균류',
     tier: 1,
     glowColor: '#ffb74d',
-    description: '단세포로 이루어진 균류(효모)로, 당분을 분해하여 이산화탄소를 만들어 빵 등을 부풀립니다.',
+    description: '빵을 부풀게 해주는 아주 작은 둥근 생물(효모)이에요. 설탕을 먹고 가스(이산화탄소)를 뿜어내서 빵을 푹신하게 만들어요.',
     miningSpeed: 1.0,
     capacity: 9,
     avatarSvg: 'yeast'
@@ -85,7 +85,7 @@ export const baseMicrobes = {
     type: '세균',
     tier: 1,
     glowColor: '#a1887f',
-    description: '짚이나 흙 속에 살며 열과 건조함에 매우 강한 막대 모양의 세균. 콩 단백질을 발효시켜 몸에 좋은 영양소와 끈적한 실을 만들어 냅니다.',
+    description: '볏짚이나 흙 속에 살아요. 콩을 발효시켜서 끈적끈적하고 구수한 냄새가 나는 맛있는 청국장으로 만들어 주는 고마운 세균이랍니다!',
     miningSpeed: 0.9,
     capacity: 10,
     avatarSvg: 'bacillus'
@@ -119,7 +119,7 @@ export const combinedMicrobes = {
     type: '균류 (변종)',
     tier: 2,
     glowColor: '#ff3700',
-    description: '버섯 두 개를 우주의 뜨거운 열기로 단련해 융합한 버섯. 자원 채굴 속도가 월등히 높습니다.',
+    description: '뜨거운 화산의 열기를 머금고 태어난 버섯이에요. 갓에서 엄청난 열풍과 불꽃을 뿜어냅니다!',
     miningSpeed: 2.5,
     capacity: 20,
     avatarSvg: 'volcano_mushroom'
@@ -129,7 +129,7 @@ export const combinedMicrobes = {
     type: '균류 (변종)',
     tier: 2,
     glowColor: '#00ffcc',
-    description: '우주 광선에 노출되어 영롱한 네온빛을 뿜는 곰팡이. 은은한 오라로 주변 미생물들에게 버프를 줍니다.',
+    description: '우주의 신비한 에너지를 받아 반짝반짝 야광 빛을 내는 곰팡이에요. 어두운 곳에서도 아주 잘 보여요.',
     miningSpeed: 1.5,
     capacity: 30,
     avatarSvg: 'neon_mold'
@@ -139,7 +139,7 @@ export const combinedMicrobes = {
     type: '균류 (변종)',
     tier: 2,
     glowColor: '#dd00ff',
-    description: '버섯과 곰팡이가 한 몸으로 융합된 우주 생물. 성운의 자원을 광역 흡수하는 신비한 균사를 가집니다.',
+    description: '버섯과 곰팡이가 합쳐져서 말랑말랑한 젤리 괴물이 되었어요! 젤리 같은 몸으로 뭐든지 찰싹 달라붙어요.',
     miningSpeed: 2.2,
     capacity: 25,
     avatarSvg: 'spore_jelly'
@@ -149,7 +149,7 @@ export const combinedMicrobes = {
     type: '원생생물 (변종)',
     tier: 2,
     glowColor: '#0088ff',
-    description: '섬모를 로켓 분사기처럼 진화시켜 우주 성운을 초고속으로 활보하며 자원을 회수합니다.',
+    description: '몸에 난 털들을 로켓 엔진처럼 써서 우주 공간을 쌩쌩 날아다니는 엄청 빠른 짚신벌레예요!',
     miningSpeed: 3.5,
     capacity: 15,
     avatarSvg: 'jet_paramecium'
@@ -159,7 +159,7 @@ export const combinedMicrobes = {
     type: '원생생물 (변종)',
     tier: 2,
     glowColor: '#3c0068',
-    description: '중력을 다스릴 수 있게 진화한 아메바. 우주 먼지를 한순간에 빨아들여 대용량을 운반합니다.',
+    description: '진공청소기처럼 주변의 우주 먼지를 쭉쭉 빨아들이는 뚱뚱하고 힘이 센 아메바예요.',
     miningSpeed: 1.2,
     capacity: 60,
     avatarSvg: 'blackhole_amoeba'
@@ -169,7 +169,7 @@ export const combinedMicrobes = {
     type: '초월 변종',
     tier: 3,
     glowColor: '#ffae00',
-    description: '유글레나(해캄과 동급의 자가양분 생물)와 아메바가 합쳐져 태양처럼 빛나는 궁극의 생물. 스스로 자원을 다량 충전합니다.',
+    description: '스스로 반짝반짝 빛나는 햇빛을 만들어서 주변을 환하게 비춰주는 전설의 아메바예요.',
     miningSpeed: 5.0,
     capacity: 50,
     avatarSvg: 'sun_amoeba'
@@ -179,7 +179,7 @@ export const combinedMicrobes = {
     type: '균류 (변종)',
     tier: 2,
     glowColor: '#ffb74d',
-    description: '이스트 두 개를 합쳐 발효 능력을 극대화한 거대 효모. 주변에 엄청난 이산화탄소 기포를 발생시킵니다.',
+    description: '평범한 빵을 건물 크기만큼 부풀릴 수 있는 힘을 가진 거대 이스트예요! 뽀글뽀글 거품을 아주 많이 만들어요.',
     miningSpeed: 2.2,
     capacity: 22,
     avatarSvg: 'mega_yeast'
@@ -189,7 +189,7 @@ export const combinedMicrobes = {
     type: '균류 (변종)',
     tier: 2,
     glowColor: '#e0e0e0',
-    description: '쌀이나 콩 등에 번식하여 전통 발효의 핵심이 되는 누룩곰팡이. 각종 소화 효소를 다량 분비하여 복잡한 유기물을 잘게 분해합니다.',
+    description: '딱딱한 쌀이나 콩을 부드럽게 만들어서 맛있는 된장이나 간장으로 바꿔주는 마법의 곰팡이에요.',
     miningSpeed: 1.8,
     capacity: 35,
     avatarSvg: 'koji_mold'
@@ -199,7 +199,7 @@ export const combinedMicrobes = {
     type: '세균 (변종)',
     tier: 2,
     glowColor: '#81c784',
-    description: '알코올을 아세트산(초산)으로 바꾸는 능력을 가진 세균. 새콤한 식초를 생산하는 데 기여합니다.',
+    description: '평범한 물이나 술을 새콤달콤한 식초로 바꿔주는 신기한 세균이에요. 냄새를 맡으면 코가 찡해요!',
     miningSpeed: 2.0,
     capacity: 25,
     avatarSvg: 'acetobacter'

@@ -1,10 +1,11 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@400;500;700;900&family=Share+Tech+Mono&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/neodgm/neodgm-webfont@1.530/neodgm/style.css');
+@import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
 
 @theme {
-  --font-sans: 'Space Grotesk', system-ui, sans-serif;
-  --font-mono: 'Share Tech Mono', monospace;
-  --font-scifi: 'Orbitron', sans-serif;
+  --font-sans: 'Jua', 'Space Grotesk', system-ui, sans-serif;
+  --font-pixel: 'NeoDunggeunmo', 'Galmuri9', monospace;
+  --font-scifi: 'NeoDunggeunmo', monospace; /* Fallback for existing classes */
 }
 
 *, *::before, *::after {
@@ -16,9 +17,9 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: dark;
-  color: #f8fafc;
-  background-color: #03030d;
+  color-scheme: light;
+  color: #212529;
+  background-color: #dee2e6; /* Light gray background */
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -31,7 +32,7 @@ body {
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   width: 100vw;
   height: 100dvh;
-  background: #03030d;
+  background: #dee2e6;
   overflow: hidden;
 }
 
@@ -71,154 +72,118 @@ body {
   animation: shake 0.25s ease-in-out;
 }
 
-/* Glassmorphism Sci-Fi Panels */
-.glass-modal {
-  background: rgba(10, 11, 22, 0.88);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1.5px solid rgba(0, 240, 255, 0.15);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+/* Stardew Valley Cozy Panels -> Light Gray Theme */
+.wood-modal, .glass-modal {
+  background: #f1f3f5; 
+  border: 6px solid #ced4da; 
+  box-shadow: inset -4px -4px 0px 0px rgba(0,0,0,0.1), inset 4px 4px 0px 0px rgba(255,255,255,0.8), 0 10px 25px rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  color: #343a40;
 }
 
-.glass-panel {
-  background: rgba(13, 14, 28, 0.65);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1.5px solid rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.02);
+.wood-panel, .glass-panel {
+  background: #f8f9fa; 
+  border: 4px solid #dee2e6;
+  box-shadow: inset -3px -3px 0px 0px rgba(0,0,0,0.05);
+  border-radius: 6px;
+  color: #495057;
 }
 
-.glass-panel-cyan {
-  background: rgba(0, 240, 255, 0.03);
-  border: 1.5px solid rgba(0, 240, 255, 0.25);
-  box-shadow: 0 0 15px rgba(0, 240, 255, 0.05);
+.wood-panel-dark, .glass-panel-cyan, .glass-panel-purple {
+  background: #e9ecef;
+  border: 4px solid #ced4da;
+  border-radius: 6px;
+  color: #212529;
+  box-shadow: inset -3px -3px 0px 0px rgba(0,0,0,0.1);
 }
 
-.glass-panel-purple {
-  background: rgba(186, 104, 200, 0.03);
-  border: 1.5px solid rgba(186, 104, 200, 0.2);
-  box-shadow: 0 0 15px rgba(186, 104, 200, 0.05);
+/* Pixel Art Inspired Buttons */
+.pixel-btn-green, .scifi-btn-emerald, .scifi-btn-cyan {
+  background: #52b788;
+  border: 4px solid #2d6a4f;
+  color: white;
+  font-family: var(--font-pixel);
+  box-shadow: inset -4px -4px 0px 0px rgba(0,0,0,0.2), inset 2px 2px 0px 0px rgba(255,255,255,0.3);
+  border-radius: 4px;
+  transition: transform 0.1s;
+  text-shadow: 1px 1px 0px rgba(0,0,0,0.5);
+  padding: 0.5rem 1rem;
+}
+.pixel-btn-green:hover, .scifi-btn-emerald:hover, .scifi-btn-cyan:hover {
+  background: #74c69d;
+  transform: translateY(-2px);
+  box-shadow: inset -4px -4px 0px 0px rgba(0,0,0,0.2), inset 2px 2px 0px 0px rgba(255,255,255,0.4), 0 4px 6px rgba(0,0,0,0.2);
+}
+.pixel-btn-green:active, .scifi-btn-emerald:active, .scifi-btn-cyan:active {
+  transform: translateY(2px);
+  box-shadow: inset 4px 4px 0px 0px rgba(0,0,0,0.3);
 }
 
-/* Premium Sci-Fi Hologram Buttons */
-.scifi-btn-cyan {
-  background: rgba(0, 240, 255, 0.08);
-  border: 1.5px solid rgba(0, 240, 255, 0.4);
-  color: #00ffff;
-  font-family: var(--font-scifi);
-  text-shadow: 0 0 4px rgba(0, 240, 255, 0.5);
-  box-shadow: 0 0 8px rgba(0, 240, 255, 0.1);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+.pixel-btn-orange, .scifi-btn-amber, .scifi-btn-magenta {
+  background: #adb5bd;
+  border: 4px solid #868e96;
+  color: white;
+  font-family: var(--font-pixel);
+  box-shadow: inset -4px -4px 0px 0px rgba(0,0,0,0.2), inset 2px 2px 0px 0px rgba(255,255,255,0.3);
+  border-radius: 4px;
+  transition: transform 0.1s;
+  text-shadow: 1px 1px 0px rgba(0,0,0,0.5);
+  padding: 0.5rem 1rem;
 }
-.scifi-btn-cyan:hover {
-  background: rgba(0, 240, 255, 0.18);
-  border-color: rgba(0, 240, 255, 0.8);
-  box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
-  transform: translateY(-1px);
+.pixel-btn-orange:hover, .scifi-btn-amber:hover, .scifi-btn-magenta:hover {
+  background: #ced4da;
+  transform: translateY(-2px);
+  box-shadow: inset -4px -4px 0px 0px rgba(0,0,0,0.2), inset 2px 2px 0px 0px rgba(255,255,255,0.4), 0 4px 6px rgba(0,0,0,0.2);
 }
-.scifi-btn-cyan:active {
-  transform: translateY(0);
-}
-
-.scifi-btn-magenta {
-  background: rgba(255, 0, 85, 0.08);
-  border: 1.5px solid rgba(255, 0, 85, 0.4);
-  color: #ff0055;
-  font-family: var(--font-scifi);
-  text-shadow: 0 0 4px rgba(255, 0, 85, 0.5);
-  box-shadow: 0 0 8px rgba(255, 0, 85, 0.1);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.scifi-btn-magenta:hover {
-  background: rgba(255, 0, 85, 0.18);
-  border-color: rgba(255, 0, 85, 0.8);
-  box-shadow: 0 0 15px rgba(255, 0, 85, 0.3);
-  transform: translateY(-1px);
-}
-.scifi-btn-magenta:active {
-  transform: translateY(0);
+.pixel-btn-orange:active, .scifi-btn-amber:active, .scifi-btn-magenta:active {
+  transform: translateY(2px);
+  box-shadow: inset 4px 4px 0px 0px rgba(0,0,0,0.3);
 }
 
-.scifi-btn-emerald {
-  background: rgba(16, 185, 129, 0.08);
-  border: 1.5px solid rgba(16, 185, 129, 0.4);
-  color: #10b981;
-  font-family: var(--font-scifi);
-  text-shadow: 0 0 4px rgba(16, 185, 129, 0.5);
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.1);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+.pixel-btn-gray, .scifi-btn-glass {
+  background: #adb5bd;
+  border: 4px solid #6c757d;
+  color: white;
+  font-family: var(--font-pixel);
+  box-shadow: inset -4px -4px 0px 0px rgba(0,0,0,0.2), inset 2px 2px 0px 0px rgba(255,255,255,0.3);
+  border-radius: 4px;
+  transition: transform 0.1s;
+  text-shadow: 1px 1px 0px rgba(0,0,0,0.5);
+  padding: 0.5rem 1rem;
 }
-.scifi-btn-emerald:hover {
-  background: rgba(16, 185, 129, 0.18);
-  border-color: rgba(16, 185, 129, 0.8);
-  box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
-  transform: translateY(-1px);
+.pixel-btn-gray:hover, .scifi-btn-glass:hover {
+  background: #ced4da;
+  transform: translateY(-2px);
+  box-shadow: inset -4px -4px 0px 0px rgba(0,0,0,0.2), inset 2px 2px 0px 0px rgba(255,255,255,0.4), 0 4px 6px rgba(0,0,0,0.2);
 }
-.scifi-btn-emerald:active {
-  transform: translateY(0);
-}
-
-.scifi-btn-amber {
-  background: rgba(245, 158, 11, 0.08);
-  border: 1.5px solid rgba(245, 158, 11, 0.4);
-  color: #f59e0b;
-  font-family: var(--font-scifi);
-  text-shadow: 0 0 4px rgba(245, 158, 11, 0.5);
-  box-shadow: 0 0 8px rgba(245, 158, 11, 0.1);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.scifi-btn-amber:hover {
-  background: rgba(245, 158, 11, 0.18);
-  border-color: rgba(245, 158, 11, 0.8);
-  box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
-  transform: translateY(-1px);
-}
-.scifi-btn-amber:active {
-  transform: translateY(0);
-}
-
-.scifi-btn-glass {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1.5px solid rgba(255, 255, 255, 0.15);
-  color: #e2e8f0;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.scifi-btn-glass:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.3);
-  transform: translateY(-1px);
-}
-.scifi-btn-glass:active {
-  transform: translateY(0);
+.pixel-btn-gray:active, .scifi-btn-glass:active {
+  transform: translateY(2px);
+  box-shadow: inset 4px 4px 0px 0px rgba(0,0,0,0.3);
 }
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 12px;
+  height: 12px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(10, 11, 22, 0.5);
+  background: #e9ecef;
+  border-left: 2px solid #ced4da;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 240, 255, 0.3);
-  border-radius: 3px;
+  background: #adb5bd;
+  border: 2px solid #f1f3f5;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 240, 255, 0.6);
+  background: #6c757d;
 }
 
-.glow-text-cyan {
-  text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
-}
-
-.glow-text-fuchsia {
-  text-shadow: 0 0 8px rgba(255, 0, 245, 0.6);
-}
-
-.glow-text-emerald {
-  text-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+/* Glow effects are removed/muted for stardew style, but kept for compatibility */
+.glow-text-cyan, .glow-text-fuchsia, .glow-text-emerald {
+  text-shadow: none;
+  font-weight: bold;
 }

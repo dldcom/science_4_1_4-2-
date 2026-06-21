@@ -10,7 +10,7 @@ async function clearLabels() {
     
     const cellW = width / 5; // 204.8
     const cellH = height / 5; // 204.8
-    const bottomThreshold = 28; // Clear the bottom 28px of each cell (text box area)
+    const bottomThreshold = 20; // Clear the bottom 20px of each cell (text box area)
     
     console.log(`Clearing bottom ${bottomThreshold}px of each cell to remove text labels and their backgrounds...`);
     

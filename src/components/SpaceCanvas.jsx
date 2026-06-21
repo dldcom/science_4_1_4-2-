@@ -25,27 +25,51 @@ const spriteMapping = {
 // 미생물 모양을 그리거나 이미지 스프라이트를 렌더링하는 함수
 const drawMicrobe = (ctx, type, name, x, y, size, angle, state, glowColor, time, focusMode, spritesheetImg) => {
   ctx.save();
+  
+  // 이름 길이와 코드를 활용해 고정된 위상 오프셋 생성 (x좌표를 쓰면 이동 시 위상이 급변하여 진동 발생)
+  let phase = 0;
+  for (let i = 0; i < name.length; i++) {
+    phase += name.charCodeAt(i);
+  }
+
+  // 아주 느린 상하 진동(호흡) 효과 추가 (균류 계열에만 적용)
   let offsetY = 0;
-  if (state !== 'expedition' && (type === 'mushroom' || type === 'mold' || type === 'spore_jelly' || type === 'koji_mold')) {
-    offsetY = Math.sin(time * 0.06 + (x % 77)) * 3; // 찰랑거리는 개별 위상 오프셋
+  if (state !== 'expedition' && (type === 'mushroom' || type === 'mold' || type === 'spore_jelly' || type === 'koji_mold' || type === 'yeast' || type === 'mega_yeast')) {
+    // 진동수(0.01)로 아주 서서히 오르락내리락하도록 설정
+    offsetY = Math.sin(time * 0.01 + phase) * 4; 
   }
   ctx.translate(x, y + offsetY);
 
-  // 1. Stardew Valley 스타일 식물/균류형 흔들림 효과 (Wobble)
-  if (type === 'mushroom' || type === 'mold' || type === 'spore_jelly' || type === 'spirogyra' || type === 'koji_mold') {
-    const wobbleSpeed = 0.15;
-    const wobbleAmt = 0.06;
-    const squash = 1.0 + Math.sin(time * wobbleSpeed) * wobbleAmt;
-    const stretch = 1.0 - Math.sin(time * wobbleSpeed) * wobbleAmt;
-    ctx.scale(squash, stretch);
+  // 시각적으로 뒤집히지 않도록 각도 보정 (-PI/2 ~ PI/2 사이로 유지)
+  let renderAngle = angle;
+  let flipX = 1;
+  
+  while (renderAngle > Math.PI) renderAngle -= Math.PI * 2;
+  while (renderAngle <= -Math.PI) renderAngle += Math.PI * 2;
+
+  if (renderAngle > Math.PI / 2 || renderAngle < -Math.PI / 2) {
+    flipX = -1; // 좌우 반전
+    if (renderAngle > 0) renderAngle = Math.PI - renderAngle;
+    else renderAngle = -Math.PI - renderAngle;
   }
 
-  ctx.rotate(angle);
+  // 1. Stardew Valley 스타일 식물/균류형 흔들림 효과 (Wobble)
+  if (type === 'mushroom' || type === 'mold' || type === 'spore_jelly' || type === 'spirogyra' || type === 'koji_mold' || type === 'yeast' || type === 'mega_yeast') {
+    const wobbleSpeed = 0.015; // 덜덜거리지 않도록 매우 느리게
+    const wobbleAmt = 0.03;
+    const squash = 1.0 + Math.sin(time * wobbleSpeed + phase) * wobbleAmt;
+    const stretch = 1.0 - Math.sin(time * wobbleSpeed + phase) * wobbleAmt;
+    ctx.scale(squash * flipX, stretch);
+  } else {
+    ctx.scale(flipX, 1);
+  }
+
+  ctx.rotate(renderAngle);
 
   // 2. 스프라이트 시트가 있고 매핑 정보가 있는 경우 그리기
   const sprite = spriteMapping[name];
   if (spritesheetImg && sprite) {
-    ctx.imageSmoothingEnabled = false;
+    ctx.imageSmoothingEnabled = true;
     if (focusMode) {
       ctx.shadowBlur = 0;
       ctx.strokeStyle = '#ffb300';
@@ -344,6 +368,7 @@ export default function SpaceCanvas({
 }) {
   const canvasRef = useRef(null);
   const timeRef = useRef(0);
+  const expStartFramesRef = useRef({});
   const spritesheetImgRef = useRef(null);
   const nutrientsRef = useRef([]); // 배양액 내부 유기 영양분
   const starsRef = useRef([]);
@@ -409,6 +434,7 @@ export default function SpaceCanvas({
     camX: 4000 - window.innerWidth / 2, 
     camY: 3000 - window.innerHeight / 2 
   });
+  const draggedMicrobeRef = useRef(null);
 
   // 윈도우 크기 조정 시 dimensions 상태 동기화
   useEffect(() => {
@@ -456,8 +482,21 @@ export default function SpaceCanvas({
     const currentRefMap = new Map(microbesRef.current.map(m => [m.id, m]));
     const updatedList = microbes.map(m => {
       if (currentRefMap.has(m.id)) {
-        // 기존 미생물은 좌표 유지
-        return currentRefMap.get(m.id);
+        const oldM = currentRefMap.get(m.id);
+        // 상태가 변경되었을 때(예: 'mining' -> 'expedition')는 상위 컴포넌트(App.jsx)의 좌표 등 초기화 값을 그대로 수용
+        if (oldM.state !== m.state) {
+          return { ...m };
+        }
+        // 상태가 유지 중일 때는 로컬 물리 시뮬레이션의 위치 및 속도 값을 우선함
+        return {
+          ...m,
+          x: oldM.x,
+          y: oldM.y,
+          vx: oldM.vx,
+          vy: oldM.vy,
+          angle: oldM.angle,
+          energyCurrent: oldM.energyCurrent
+        };
       } else {
         // 새로 추가된 미생물 (스폰/조합)
         return m;
@@ -466,26 +505,31 @@ export default function SpaceCanvas({
     microbesRef.current = updatedList;
   }, [microbes]);
 
-  // 새로운 미생물 소환 감지 시 포탈 소환 불꽃 파티클 이펙트
-  const prevCountRef = useRef(microbes.length);
+  // 새로운 미생물 소환 감지 시 소환된 위치에서 불꽃 파티클 이펙트
+  const prevMicrobesRef = useRef(microbes);
   useEffect(() => {
-    if (microbes.length > prevCountRef.current) {
-      for (let i = 0; i < 25; i++) {
-        const angleVal = Math.random() * Math.PI * 2;
-        const pSpeed = 1.5 + Math.random() * 4.0;
-        particlesRef.current.push({
-          x: collector.x,
-          y: collector.y,
-          vx: Math.cos(angleVal) * pSpeed,
-          vy: Math.sin(angleVal) * pSpeed,
-          color: ['#ffb300', '#ffa726', '#66bb6a', '#29b6f6', '#ab47bc'][Math.floor(Math.random() * 5)],
-          size: 3 + Math.floor(Math.random() * 3),
-          life: 30 + Math.floor(Math.random() * 20),
-          isPixelStar: true
-        });
-      }
+    if (microbes.length > prevMicrobesRef.current.length) {
+      const prevIds = new Set(prevMicrobesRef.current.map(m => m.id));
+      const newMicrobes = microbes.filter(m => !prevIds.has(m.id));
+      
+      newMicrobes.forEach(newM => {
+        for (let i = 0; i < 25; i++) {
+          const angleVal = Math.random() * Math.PI * 2;
+          const pSpeed = 1.5 + Math.random() * 4.0;
+          particlesRef.current.push({
+            x: newM.x,
+            y: newM.y,
+            vx: Math.cos(angleVal) * pSpeed,
+            vy: Math.sin(angleVal) * pSpeed,
+            color: ['#ffb300', '#ffa726', '#66bb6a', '#29b6f6', '#ab47bc'][Math.floor(Math.random() * 5)],
+            size: 3 + Math.floor(Math.random() * 3),
+            life: 30 + Math.floor(Math.random() * 20),
+            isPixelStar: true
+          });
+        }
+      });
     }
-    prevCountRef.current = microbes.length;
+    prevMicrobesRef.current = microbes;
   }, [microbes]);
 
   useEffect(() => {
@@ -496,10 +540,18 @@ export default function SpaceCanvas({
 
     // 4. 물리 시뮬레이션 계산
     const updatePhysics = () => {
-      microbesRef.current = microbesRef.current.map(m => {
-        let { x, y, vx, vy, state, targetX, targetY, energyCurrent, energyCapacity, speed, targetNebulaId, type, name, targetPlanetId, angle } = m;
+      const microbesList = microbesRef.current;
+      
+      // 1. 개별 상태 및 물리 갱신
+      for (let i = 0; i < microbesList.length; i++) {
+        let m = microbesList[i];
+        if (draggedMicrobeRef.current && draggedMicrobeRef.current.id === m.id) {
+          // 드래그 중인 개체는 마우스 이벤트에서 위치가 갱신되므로 물리 스킵
+          continue;
+        }
+
+        let { x, y, vx, vy, state, energyCurrent, energyCapacity, speed, targetPlanetId, angle } = m;
         
-        // 중앙 배양조 물리 영역 설정
         const tankWidth = 800;
         const tankHeight = 600;
         const minX = 4000 - tankWidth / 2;
@@ -508,33 +560,19 @@ export default function SpaceCanvas({
         const maxY = 3000 + tankHeight / 2;
 
         if (state === 'mining') {
-          // 물속을 둥둥 떠다니는 현실적인 Pulse-Glide (추진 후 관성 미끄러짐) 물리 시뮬레이션
-          // 200프레임(약 3.3초) 주기로 꼬리를 저어 슉 나아간 뒤, 나머지 시간 동안은 관성으로 유유히 흐름
-          const uniqueOffset = parseInt((m.id || '0').split('-')[0]) % 100 || 0;
-          const cycle = (timeRef.current + uniqueOffset) % 200;
+          // 물속을 둥둥 떠다니는 부유 시뮬레이션
           let curAngle = (angle === undefined || isNaN(angle)) ? Math.random() * Math.PI * 2 : angle;
-
-          if (cycle < 12) {
-            // 펄스 추진 시작 프레임일 때 나아갈 각도를 임의로 조향
-            if (cycle === 0) {
-              curAngle += (Math.random() - 0.5) * 1.8; // 방향을 크게 전환
-            }
-            // 펄스 추진력 가중치 (사인파를 그리며 슉 밀어줌)
-            const pushForce = 2.5 * speed * Math.sin((cycle / 12) * Math.PI);
-            vx += Math.cos(curAngle) * pushForce * 0.28;
-            vy += Math.sin(curAngle) * pushForce * 0.28;
-          } else {
-            // 관성 표류(Glide) 구간: 추가 동력 없이 미끄러지며, 물결에 의해 미세하게 흔들림만 적용
-            curAngle += (Math.random() - 0.5) * 0.012;
-            vx += Math.cos(curAngle) * 0.006;
-            vy += Math.sin(curAngle) * 0.006;
-          }
+          curAngle += (Math.random() - 0.5) * 0.05;
           angle = curAngle;
+
+          const floatSpeed = 0.01 * speed; // 초저속 유영
+          vx += Math.cos(curAngle) * floatSpeed * 0.1;
+          vy += Math.sin(curAngle) * floatSpeed * 0.1;
 
           // 부유 유영 중에 주변 영양분에 가까이 닿았는지(16px 이하) 검증
           let touchedNutrient = null;
-          for (let i = 0; i < nutrientsRef.current.length; i++) {
-            const nut = nutrientsRef.current[i];
+          for (let j = 0; j < nutrientsRef.current.length; j++) {
+            const nut = nutrientsRef.current[j];
             const d = Math.sqrt(Math.pow(nut.x - x, 2) + Math.pow(nut.y - y, 2));
             if (d <= 16) {
               touchedNutrient = nut;
@@ -543,37 +581,21 @@ export default function SpaceCanvas({
           }
 
           if (touchedNutrient) {
-            // 영양분 먹기 성공
             nutrientsRef.current = nutrientsRef.current.filter(n => n.id !== touchedNutrient.id);
-            
-            energyCurrent += energyCapacity * 0.25; // 25% 충전
+            energyCurrent += energyCapacity * 0.25;
             if (energyCurrent >= energyCapacity) {
               energyCurrent = energyCapacity;
               state = 'returning';
             }
-
             textPopupsRef.current.push({
-              x: x,
-              y: y - 12,
-              text: "+1 Bio",
-              color: m.glowColor || '#ffca28',
-              alpha: 1.0,
-              life: 40
+              x: x, y: y - 12, text: "+1 Bio", color: m.glowColor || '#ffca28', alpha: 1.0, life: 40
             });
-
-            // 먹기 이펙트 먼지 불꽃 추가
-            for (let i = 0; i < 5; i++) {
+            for (let k = 0; k < 5; k++) {
               const angleVal = Math.random() * Math.PI * 2;
               const pSpeed = 0.5 + Math.random() * 1.5;
               particlesRef.current.push({
-                x: x,
-                y: y,
-                vx: Math.cos(angleVal) * pSpeed,
-                vy: Math.sin(angleVal) * pSpeed,
-                color: '#ffca28',
-                size: 2 + Math.floor(Math.random() * 2),
-                life: 15 + Math.floor(Math.random() * 8),
-                isPixelStar: true
+                x: x, y: y, vx: Math.cos(angleVal) * pSpeed, vy: Math.sin(angleVal) * pSpeed,
+                color: '#ffca28', size: 2 + Math.floor(Math.random() * 2), life: 15 + Math.floor(Math.random() * 8), isPixelStar: true
               });
             }
           }
@@ -585,7 +607,7 @@ export default function SpaceCanvas({
             state = 'returning';
           }
         } else if (state === 'returning') {
-          // 중앙 포탈로 복귀 및 에너지 납품 (복귀 시에는 일정한 속도로 복귀하도록 깡총거림 제거)
+          // 중앙 포탈로 복귀 및 에너지 납품
           const dx = collector.x - x;
           const dy = collector.y - y;
           const dist = Math.sqrt(dx * dx + dy * dy);
@@ -593,116 +615,191 @@ export default function SpaceCanvas({
           if (dist < collector.radius + 10) {
             const harvestAmount = Math.round(energyCapacity);
             addBioEnergy(harvestAmount);
-            
             textPopupsRef.current.push({
-              x: x,
-              y: y - 12,
-              text: `+${harvestAmount}`,
-              color: m.glowColor,
-              alpha: 1.0,
-              life: 40
+              x: x, y: y - 12, text: `+${harvestAmount}`, color: m.glowColor, alpha: 1.0, life: 40
             });
-
-            // 포탈 에너지 충돌 파티클
-            for (let i = 0; i < 10; i++) {
+            for (let k = 0; k < 10; k++) {
               const angleVal = Math.random() * Math.PI * 2;
               const pSpeed = 1.0 + Math.random() * 2.5;
               particlesRef.current.push({
-                x: collector.x,
-                y: collector.y,
-                vx: Math.cos(angleVal) * pSpeed,
-                vy: Math.sin(angleVal) * pSpeed,
-                color: m.glowColor || '#ffb300',
-                size: 2 + Math.floor(Math.random() * 2),
-                life: 20 + Math.floor(Math.random() * 12),
-                isPixelStar: true
+                x: collector.x, y: collector.y, vx: Math.cos(angleVal) * pSpeed, vy: Math.sin(angleVal) * pSpeed,
+                color: m.glowColor || '#ffb300', size: 2 + Math.floor(Math.random() * 2), life: 20 + Math.floor(Math.random() * 12), isPixelStar: true
               });
             }
-
             energyCurrent = 0;
             state = 'mining';
           } else {
-            vx = (dx / dist) * 1.8 * speed;
-            vy = (dy / dist) * 1.8 * speed;
+            // 포탈 방향으로 가속 (하지만 이미 충분히 빠른 관성이 있으면 더하지 않음)
+            const returnVx = (dx / dist) * 0.8 * speed;
+            const returnVy = (dy / dist) * 0.8 * speed;
+            if (Math.sqrt(vx * vx + vy * vy) < 2.0) {
+              vx += (returnVx - vx) * 0.05;
+              vy += (returnVy - vy) * 0.05;
+            }
           }
         } else if (state === 'expedition') {
-          // 원정 파견: 해당 식품 행성으로 비행
           const targetPlanet = foodPlanets.find(p => p.id === targetPlanetId);
           if (targetPlanet) {
-            const dx = targetPlanet.x - x;
-            const dy = targetPlanet.y - y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
+            const startFrame = expStartFramesRef.current[targetPlanetId] || timeRef.current;
+            const elapsed = timeRef.current - startFrame;
+            
+            // 배양조 끝부분 위치 계산
+            const angleToPlanet = Math.atan2(targetPlanet.y - 3000, targetPlanet.x - 4000);
+            const edgeX = 4000 + Math.cos(angleToPlanet) * 380;
+            const edgeY = 3000 + Math.sin(angleToPlanet) * 280;
 
-            if (dist > 35) {
-              vx = (dx / dist) * 3.8 * speed;
-              vy = (dy / dist) * 3.8 * speed;
+            if (elapsed < 60) {
+              // 처음 1초(60프레임) 동안 중앙에서 배양조 끝부분으로 이동
+              const t = elapsed / 60;
+              const easeOut = 1 - Math.pow(1 - t, 3);
+              const oldX = x;
+              const oldY = y;
+              x = 4000 + (edgeX - 4000) * easeOut;
+              y = 3000 + (edgeY - 3000) * easeOut;
+              vx = 0; vy = 0;
+              if (elapsed > 0) {
+                angle = Math.atan2(y - oldY, x - oldX);
+              }
             } else {
-              // 행성 도착 및 주변 공전 대기
-              vx = (Math.random() - 0.5) * 0.3;
+              // 배양조 끝부분 도달 후 5초(300프레임) 동안 수로를 따라 이동
+              const progress = Math.min(1.0, (elapsed - 60) / 300.0);
+              
+              if (progress < 1.0) {
+                // 곡선 수로 제어점 계산
+                const dx = targetPlanet.x - edgeX;
+                const dy = targetPlanet.y - edgeY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const bendDir = (targetPlanet.id % 2 === 0) ? 1 : -1;
+                const cp1x = edgeX + dx * 0.33 - (dy / dist) * 150 * bendDir;
+                const cp1y = edgeY + dy * 0.33 + (dx / dist) * 150 * bendDir;
+                const cp2x = edgeX + dx * 0.66 + (dy / dist) * 150 * bendDir;
+                const cp2y = edgeY + dy * 0.66 - (dx / dist) * 150 * bendDir;
+
+                const mt = 1 - progress;
+                const oldX = x;
+                const oldY = y;
+                x = mt*mt*mt*edgeX + 3*mt*mt*progress*cp1x + 3*mt*progress*progress*cp2x + progress*progress*progress*targetPlanet.x;
+                y = mt*mt*mt*edgeY + 3*mt*mt*progress*cp1y + 3*mt*progress*progress*cp2y + progress*progress*progress*targetPlanet.y;
+                vx = 0; vy = 0;
+                
+                if (progress > 0) {
+                  angle = Math.atan2(y - oldY, x - oldX);
+                }
+              } else {
+                // 도착 후 궤도 회전
+                const dx = targetPlanet.x - x;
+                const dy = targetPlanet.y - y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const orbitRadius = 45;
+                const radialForce = (dist - orbitRadius) * 0.05;
+                const tangentX = -dy / dist;
+                const tangentY = dx / dist;
+                const orbitSpeed = 1.5;
+                
+                const desiredVx = tangentX * orbitSpeed + (dx / dist) * radialForce;
+                const desiredVy = tangentY * orbitSpeed + (dy / dist) * radialForce;
+                
+                vx += (desiredVx - vx) * 0.1;
+                vy += (desiredVy - vy) * 0.1;
+              }
             }
           }
         }
 
-        // 1. Separation (미생물 간 척력): 겹침 방지 및 자연스러운 무리 퍼짐 유도
-        let repX = 0;
-        let repY = 0;
-        microbesRef.current.forEach(other => {
-          if (other.id === m.id) return;
-          const dx = x - other.x;
-          const dy = y - other.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          const minSep = 35; // 서로 유지할 최소 격리 거리 (픽셀 단위)
-          if (dist < minSep && dist > 0) {
-            const force = (minSep - dist) / minSep; // 거리가 가까울수록 더 강한 반발력
-            repX += (dx / dist) * force * 0.25;
-            repY += (dy / dist) * force * 0.25;
-          }
-        });
-        vx += repX;
-        vy += repY;
-
-        // 물리 마찰 (마찰력을 줄여 관성 미끄러짐(Glide) 효과 대폭 상승)
-        if (state === 'expedition') {
+        // 물리 마찰 (마찰력을 줄여 던졌을 때 멀리 미끄러지도록 함)
+        if (state !== 'expedition') {
           vx *= 0.98;
           vy *= 0.98;
         } else {
-          vx *= 0.975;
-          vy *= 0.975;
-        }
-
-        // 식물/균류형(버섯, 곰팡이 등)은 기어 다니지 않고 제자리에 완전히 고착
-        if (state !== 'expedition' && (type === 'mold' || type === 'mushroom' || type === 'spore_jelly' || type === 'koji_mold')) {
-          vx = 0;
-          vy = 0;
+          vx *= 0.985;
+          vy *= 0.985;
         }
 
         x += vx;
         y += vy;
 
-        // 경계 벽 설정
+        // 경계 벽 반사 (당구 쿠션) - 탄성을 크게 주어 잘 튕기게 함
         if (state === 'expedition') {
-          if (x < 30) { x = 30; vx *= -0.5; }
-          if (x > 8000 - 30) { x = 8000 - 30; vx *= -0.5; }
-          if (y < 30) { y = 30; vy *= -0.5; }
-          if (y > 6000 - 30) { y = 6000 - 30; vy *= -0.5; }
+          if (x < 30) { x = 30; vx *= -0.8; }
+          if (x > 8000 - 30) { x = 8000 - 30; vx *= -0.8; }
+          if (y < 30) { y = 30; vy *= -0.8; }
+          if (y > 6000 - 30) { y = 6000 - 30; vy *= -0.8; }
         } else {
-          // 일반 미생물은 배양 연못 안에서만 활보
           const margin = 24;
-          if (x < minX + margin) { x = minX + margin; vx *= -0.5; }
-          if (x > maxX - margin) { x = maxX - margin; vx *= -0.5; }
-          if (y < minY + margin) { y = minY + margin; vy *= -0.5; }
-          if (y > maxY - margin) { y = maxY - margin; vy *= -0.5; }
+          if (x < minX + margin) { x = minX + margin; vx *= -0.8; }
+          if (x > maxX - margin) { x = maxX - margin; vx *= -0.8; }
+          if (y < minY + margin) { y = minY + margin; vy *= -0.8; }
+          if (y > maxY - margin) { y = maxY - margin; vy *= -0.8; }
         }
 
         if (state === 'expedition' || Math.sqrt(vx * vx + vy * vy) > 0.05) {
-          angle = Math.atan2(vy, vx);
-        }
-        if (state !== 'expedition' && (type === 'mold' || type === 'mushroom' || type === 'spore_jelly' || type === 'koji_mold')) {
-          angle = -Math.PI / 2;
+          const targetAngle = Math.atan2(vy, vx);
+          if (angle === undefined || isNaN(angle)) {
+            angle = targetAngle;
+          } else {
+            let diff = targetAngle - angle;
+            while (diff > Math.PI) diff -= Math.PI * 2;
+            while (diff <= -Math.PI) diff += Math.PI * 2;
+            angle += diff * 0.08;
+          }
         }
 
-        return { ...m, x, y, vx, vy, state, energyCurrent, angle };
-      });
+        m.x = x; m.y = y; m.vx = vx; m.vy = vy;
+        m.state = state; m.energyCurrent = energyCurrent; m.angle = angle;
+      }
+
+      // 2. 쌍방향 탄성 충돌 (포켓볼 당구 물리)
+      for (let i = 0; i < microbesList.length; i++) {
+        for (let j = i + 1; j < microbesList.length; j++) {
+          let m1 = microbesList[i];
+          let m2 = microbesList[j];
+          
+          const dx = m1.x - m2.x;
+          const dy = m1.y - m2.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const minColDist = 45; // 충돌 기준 반경
+          
+          if (dist < minColDist && dist > 0) {
+            const nx = dx / dist;
+            const ny = dy / dist;
+            
+            // 상대 속도 계산
+            const rvx = m1.vx - m2.vx;
+            const rvy = m1.vy - m2.vy;
+            const velAlongNormal = rvx * nx + rvy * ny;
+            
+            // 서로 다가오고 있을 때만 운동량 교환
+            if (velAlongNormal < 0) {
+              const restitution = 0.85; // 완전 탄성에 가까운 당구공 반발 계수
+              const impulse = -(1 + restitution) * velAlongNormal * 0.5; // 질량 1 가정
+              
+              const m1IsDragged = draggedMicrobeRef.current && draggedMicrobeRef.current.id === m1.id;
+              const m2IsDragged = draggedMicrobeRef.current && draggedMicrobeRef.current.id === m2.id;
+
+              // 드래그 중인 미생물은 무한 질량처럼 다른 미생물을 밀어침 (속도 감소 없음)
+              if (!m1IsDragged) {
+                m1.vx += nx * impulse;
+                m1.vy += ny * impulse;
+              }
+              if (!m2IsDragged) {
+                m2.vx -= nx * impulse;
+                m2.vy -= ny * impulse;
+              }
+
+              // 겹침 위치 즉각 보정 (단단한 충돌)
+              const overlap = minColDist - dist;
+              if (overlap > 0) {
+                const correction = overlap / 2;
+                if (!m1IsDragged) { m1.x += nx * correction; m1.y += ny * correction; }
+                if (!m2IsDragged) { m2.x -= nx * correction; m2.y -= ny * correction; }
+              }
+            }
+          }
+        }
+      }
+
+      // 리액트 상태 동기화를 위해 새로운 배열 참조 생성
+      microbesRef.current = microbesList.map(m => ({...m}));
     };
 
     // 5. 프레임 렌더링 루프
@@ -716,10 +813,10 @@ export default function SpaceCanvas({
       const maxY = 3000 + tankHeight / 2;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.imageSmoothingEnabled = false;
-      ctx.mozImageSmoothingEnabled = false;
-      ctx.webkitImageSmoothingEnabled = false;
-      ctx.msImageSmoothingEnabled = false;
+      ctx.imageSmoothingEnabled = true;
+      ctx.mozImageSmoothingEnabled = true;
+      ctx.webkitImageSmoothingEnabled = true;
+      ctx.msImageSmoothingEnabled = true;
 
       // 카메라 오프셋 적용 시작
       ctx.save();
@@ -850,6 +947,174 @@ export default function SpaceCanvas({
       ctx.fillText("BIO-REACTOR TANK : LIVE", minX + 42, minY - 11);
       ctx.restore();
 
+      // 5.2.5. 탐사 및 보급 수로 렌더링 (탱크 테두리를 자연스럽게 뚫고 나오도록 클리핑)
+      ctx.save();
+      ctx.beginPath();
+      // 화면 전체 영역 지정 (허용 영역)
+      ctx.rect(cameraRef.current.x - 200, cameraRef.current.y - 200, dimensions.width + 400, dimensions.height + 400);
+      // 배양조 내부 구멍 지정 (제외 영역) - 테두리를 완전히 덮기 위해 5px 축소
+      const shrink = 5;
+      ctx.roundRect(minX + shrink, minY + shrink, (maxX - minX) - shrink * 2, (maxY - minY) - shrink * 2, 19);
+      ctx.clip('evenodd');
+
+      foodPlanets.forEach(planet => {
+        const exp = expeditions && expeditions[planet.id];
+        if (exp && (exp.status === 'exploring' || exp.status === 'supplying')) {
+          
+          if (exp.status === 'exploring') {
+            if (!expStartFramesRef.current[planet.id]) {
+              expStartFramesRef.current[planet.id] = time;
+            }
+          } else {
+            if (expStartFramesRef.current[planet.id]) {
+              delete expStartFramesRef.current[planet.id];
+            }
+          }
+
+          let progress = 1.0;
+          if (exp.status === 'exploring') {
+            const startFrame = expStartFramesRef.current[planet.id] || time;
+            const elapsedFrames = time - startFrame;
+            if (elapsedFrames < 60) {
+              progress = 0;
+            } else {
+              progress = Math.min(1.0, (elapsedFrames - 60) / 300.0);
+            }
+          }
+
+          if (progress > 0) {
+            const angleToPlanet = Math.atan2(planet.y - 3000, planet.x - 4000);
+            const edgeX = 4000 + Math.cos(angleToPlanet) * 380;
+            const edgeY = 3000 + Math.sin(angleToPlanet) * 280;
+
+            const dx = planet.x - edgeX;
+            const dy = planet.y - edgeY;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const bendDir = (planet.id % 2 === 0) ? 1 : -1;
+            const cp1x = edgeX + dx * 0.33 - (dy / dist) * 150 * bendDir;
+            const cp1y = edgeY + dy * 0.33 + (dx / dist) * 150 * bendDir;
+            const cp2x = edgeX + dx * 0.66 + (dy / dist) * 150 * bendDir;
+            const cp2y = edgeY + dy * 0.66 - (dx / dist) * 150 * bendDir;
+
+            const drawCanalPath = (ctx) => {
+              ctx.beginPath();
+              ctx.moveTo(edgeX, edgeY);
+              if (progress >= 1.0) {
+                ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, planet.x, planet.y);
+              } else {
+                const steps = 40;
+                const currentStep = Math.floor(progress * steps);
+                for (let i = 1; i <= currentStep; i++) {
+                  const t = i / steps;
+                  const mt = 1 - t;
+                  const px = mt*mt*mt*edgeX + 3*mt*mt*t*cp1x + 3*mt*t*t*cp2x + t*t*t*planet.x;
+                  const py = mt*mt*mt*edgeY + 3*mt*mt*t*cp1y + 3*mt*t*t*cp2y + t*t*t*planet.y;
+                  ctx.lineTo(px, py);
+                }
+                if (progress > 0 && progress < 1.0) {
+                  const mt = 1 - progress;
+                  const px = mt*mt*mt*edgeX + 3*mt*mt*progress*cp1x + 3*mt*progress*progress*cp2x + progress*progress*progress*planet.x;
+                  const py = mt*mt*mt*edgeY + 3*mt*mt*progress*cp1y + 3*mt*progress*progress*cp2y + progress*progress*progress*planet.y;
+                  ctx.lineTo(px, py);
+                }
+              }
+            };
+
+            ctx.save();
+            
+            // 1. 수로 테두리 (탱크 테두리와 동일한 색상으로 자연스럽게 이어짐)
+            drawCanalPath(ctx);
+            ctx.lineWidth = 28;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = '#455a64';
+            ctx.stroke();
+
+            // 2. 수로 내부 물길
+            drawCanalPath(ctx);
+            ctx.lineWidth = 20;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            if (pondWaterTileImgRef.current) {
+              const waterPattern = ctx.createPattern(pondWaterTileImgRef.current, 'repeat');
+              ctx.strokeStyle = waterPattern;
+            } else {
+              ctx.strokeStyle = '#00e5ff';
+            }
+            ctx.stroke();
+
+            // 3. 테두리 네온 튜브 라인
+            drawCanalPath(ctx);
+            ctx.lineWidth = 24;
+            ctx.lineJoin = 'round';
+            if (exp.status === 'exploring') {
+              ctx.strokeStyle = 'rgba(0, 229, 255, 0.4)';
+              ctx.setLineDash([15, 10]);
+              ctx.lineDashOffset = -time * 1.5;
+              ctx.shadowBlur = 15;
+              ctx.shadowColor = '#00e5ff';
+            } else { // supplying
+              ctx.strokeStyle = 'rgba(76, 175, 80, 0.4)';
+              ctx.shadowBlur = 15;
+              ctx.shadowColor = '#4caf50';
+            }
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // 보급 물자(재료) 흐르는 효과 (5초 주기)
+            if (exp.status === 'supplying') {
+              const offsetTime = time + Math.floor(planet.x);
+              let dropProgress = (offsetTime % 300) / 300;
+              
+              // 배양조 가장자리에 도착한 순간(주기 완료) 자원 획득 처리
+              if (offsetTime % 300 === 0 && time > 0) {
+                addBioEnergy(planet.rewardAmount);
+                textPopupsRef.current.push({
+                  x: edgeX,
+                  y: edgeY - 20,
+                  text: `+${planet.rewardAmount}`,
+                  color: planet.color || '#4caf50',
+                  alpha: 1.0,
+                  life: 40
+                });
+                
+                // 도착 파티클 효과
+                for (let k = 0; k < 5; k++) {
+                  const angleVal = Math.random() * Math.PI * 2;
+                  particlesRef.current.push({
+                    x: edgeX, y: edgeY, 
+                    vx: Math.cos(angleVal) * 2, vy: Math.sin(angleVal) * 2,
+                    color: planet.color || '#4caf50', size: 3, life: 20, isPixelStar: true
+                  });
+                }
+              }
+              
+              // 역방향: dropProgress가 0일 때 행성(t=1), 1일 때 배양조 가장자리(t=0)
+              const t = 1 - dropProgress;
+              const mt = 1 - t;
+              
+              const dropX = mt*mt*mt*edgeX + 3*mt*mt*t*cp1x + 3*mt*t*t*cp2x + t*t*t*planet.x;
+              const dropY = mt*mt*mt*edgeY + 3*mt*mt*t*cp1y + 3*mt*t*t*cp2y + t*t*t*planet.y;
+              
+              ctx.save();
+              ctx.font = '22px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              
+              // 행성에서 방금 막 출발할 때만 살짝 페이드인
+              if (dropProgress < 0.1) {
+                ctx.globalAlpha = dropProgress / 0.1;
+              }
+              
+              ctx.fillText(planet.foodIcon || '📦', dropX, dropY);
+              ctx.restore();
+            }
+            ctx.restore();
+          }
+        }
+      });
+      ctx.restore();
+
       // 보글보글 거품 기포 발생
       if (time % 10 === 0 && Math.random() < 0.35) {
         particlesRef.current.push({
@@ -973,6 +1238,12 @@ export default function SpaceCanvas({
         ctx.font = 'bold 12px DungGeunMo, Courier New';
         ctx.fillText(planet.name, planet.x, planet.y - 46);
 
+        if (status === 'exploring') {
+          ctx.fillStyle = '#00e5ff';
+          ctx.font = 'bold 12px DungGeunMo, Courier New';
+          ctx.fillText(`탐사 중... (${exp.timer}초)`, planet.x, planet.y + 55);
+        }
+
         ctx.font = 'bold 11px DungGeunMo, Courier New';
         if (status === 'locked') {
           if (hasRequiredMicrobe) {
@@ -995,27 +1266,6 @@ export default function SpaceCanvas({
 
         ctx.restore();
       });
-
-      // 5.5. 개척이 끝난 행성에서 포탈로 날아가는 에너지 수송선 파티클 예약 생성
-      if (time % 150 === 0) {
-        foodPlanets.forEach(planet => {
-          const status = expeditions && expeditions[planet.id]?.status;
-          if (status === 'supplying') {
-            particlesRef.current.push({
-              x: planet.x,
-              y: planet.y,
-              targetX: collector.x,
-              targetY: collector.y,
-              progress: 0,
-              speed: 0.006 + Math.random() * 0.004,
-              isFoodParticle: true,
-              foodIcon: planet.foodIcon,
-              rewardAmount: planet.rewardAmount,
-              color: planet.color
-            });
-          }
-        });
-      }
 
       // 5.6. 중앙 포탈 (차원 에너지 수집기) 그리기
       ctx.save();
@@ -1165,23 +1415,7 @@ export default function SpaceCanvas({
           spritesheetImgRef.current
         );
 
-        // 채굴 중 게이지 링 그리기
-        if (m.state === 'mining') {
-          ctx.save();
-          ctx.strokeStyle = '#ffffff15';
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.arc(m.x, m.y, 25, 0, Math.PI * 2);
-          ctx.stroke();
-
-          ctx.strokeStyle = m.glowColor;
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          const percent = m.energyCurrent / m.energyCapacity;
-          ctx.arc(m.x, m.y, 25, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * percent);
-          ctx.stroke();
-          ctx.restore();
-        }
+        // 채굴 중 게이지 링 그리기 삭제됨 (사용자 요청)
 
         // 납품 귀환 시 하이라이트 링
         if (m.state === 'returning') {
@@ -1247,8 +1481,8 @@ export default function SpaceCanvas({
       }
       ctx.restore();
 
-      // 돋보기 모니터 갱신을 위해 10프레임마다 상위 컴포넌트에 미생물 상태 동기화
-      if (focusedMicrobe && time % 10 === 0) {
+      // 화면 상태 갱신을 1초(60프레임) 단위로 줄여서 리액트 리렌더링 렉 최소화
+      if (focusedMicrobe && time % 60 === 0) {
         setMicrobes([...microbesRef.current]);
       }
 
@@ -1278,27 +1512,87 @@ export default function SpaceCanvas({
   };
 
   const handleMouseDown = (e) => {
-    dragStartRef.current = {
-      x: e.clientX,
-      y: e.clientY,
-      camX: cameraRef.current.x,
-      camY: cameraRef.current.y
-    };
-    isDraggingRef.current = true;
     const canvas = canvasRef.current;
-    if (canvas) {
-      canvas.style.cursor = 'grabbing';
+    const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0].clientX);
+    const clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0].clientY);
+
+    const rect = canvas.getBoundingClientRect();
+    // 클릭 시작(dragDist)을 알기 위한 dragStartRef 기록
+    dragStartRef.current = {
+      x: clientX,
+      y: clientY,
+      camX: cameraRef.current.x,
+      camY: cameraRef.current.y,
+      rectLeft: rect.left,
+      rectTop: rect.top
+    };
+
+    // 캔버스 좌표계 변환
+    const clickX = clientX - rect.left;
+    const clickY = clientY - rect.top;
+    const worldClickX = clickX + cameraRef.current.x;
+    const worldClickY = clickY + cameraRef.current.y;
+
+    // 미생물 클릭 체크 (드래그 타겟 찾기)
+    let clickedMicrobe = null;
+    for (let i = microbesRef.current.length - 1; i >= 0; i--) {
+      const m = microbesRef.current[i];
+      const dist = Math.sqrt(Math.pow(worldClickX - m.x, 2) + Math.pow(worldClickY - m.y, 2));
+      if (dist < 35) { // 넉넉한 클릭 반경
+        clickedMicrobe = m;
+        break;
+      }
     }
+
+    if (clickedMicrobe) {
+      draggedMicrobeRef.current = {
+        id: clickedMicrobe.id,
+        history: [{ x: worldClickX, y: worldClickY, time: performance.now() }]
+      };
+      isDraggingRef.current = false; // 카메라 드래그 방지
+      if (canvas) canvas.style.cursor = 'grabbing';
+      return;
+    }
+
+    // 빈 공간 클릭이면 카메라 드래그
+    isDraggingRef.current = true;
+    if (canvas) canvas.style.cursor = 'grabbing';
   };
 
   const handleMouseMove = (e) => {
-    if (!isDraggingRef.current) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0].clientX);
     const clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0].clientY);
     if (clientX === undefined || clientY === undefined) return;
+
+    if (draggedMicrobeRef.current) {
+      // 미생물 드래그 중 (rect 캐싱 사용으로 성능 최적화)
+      const clickX = clientX - dragStartRef.current.rectLeft;
+      const clickY = clientY - dragStartRef.current.rectTop;
+      const worldX = clickX + cameraRef.current.x;
+      const worldY = clickY + cameraRef.current.y;
+
+      const history = draggedMicrobeRef.current.history;
+      history.push({ x: worldX, y: worldY, time: performance.now() });
+      if (history.length > 5) history.shift();
+
+      // 드래그 중인 미생물의 위치를 강제로 마우스 위치로 동기화
+      const mId = draggedMicrobeRef.current.id;
+      const targetMicrobe = microbesRef.current.find(m => m.id === mId);
+      if (targetMicrobe) {
+        // 배양조 내부로 제한 (벽을 뚫지 않도록)
+        const margin = 24;
+        targetMicrobe.x = Math.max(3600 + margin, Math.min(4400 - margin, worldX));
+        targetMicrobe.y = Math.max(2700 + margin, Math.min(3300 - margin, worldY));
+        targetMicrobe.vx = 0;
+        targetMicrobe.vy = 0;
+      }
+      return;
+    }
+
+    if (!isDraggingRef.current) return;
 
     const dx = clientX - dragStartRef.current.x;
     const dy = clientY - dragStartRef.current.y;
@@ -1317,6 +1611,36 @@ export default function SpaceCanvas({
   };
 
   const handleMouseUpOrLeave = () => {
+    if (draggedMicrobeRef.current) {
+      const history = draggedMicrobeRef.current.history;
+      const mId = draggedMicrobeRef.current.id;
+      const targetMicrobe = microbesRef.current.find(m => m.id === mId);
+
+      if (targetMicrobe && history.length >= 2) {
+        // 드래그 속도 계산하여 던지는 물리 효과 적용 (너무 빠르지 않도록 민감도 감소)
+        const first = history[0];
+        const last = history[history.length - 1];
+        const dt = (last.time - first.time) || 16;
+        
+        // 사용자의 요청으로 1.5배 상향 (민감도 0.9)
+        let throwVx = ((last.x - first.x) / dt) * 16 * 0.9;
+        let throwVy = ((last.y - first.y) / dt) * 16 * 0.9;
+
+        const maxSpeed = 23; // 최대 스로우 속도 1.5배 상향 (15 -> 23)
+        const speed = Math.sqrt(throwVx * throwVx + throwVy * throwVy);
+        if (speed > maxSpeed) {
+          throwVx = (throwVx / speed) * maxSpeed;
+          throwVy = (throwVy / speed) * maxSpeed;
+        }
+
+        targetMicrobe.vx = throwVx;
+        targetMicrobe.vy = throwVy;
+        targetMicrobe.state = 'mining';
+      }
+
+      draggedMicrobeRef.current = null;
+    }
+
     if (!isDraggingRef.current) return;
     isDraggingRef.current = false;
     const canvas = canvasRef.current;
