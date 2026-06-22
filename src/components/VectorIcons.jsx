@@ -130,45 +130,43 @@ export function FoodIcon({ name, className = "w-12 h-12", glow = true }) {
 }
 
 const spriteMapping = {
-  '버섯': { row: 0, col: 0 },
-  '곰팡이': { row: 0, col: 1 },
-  '이스트': { row: 0, col: 2 },
-  '누룩곰팡이': { row: 0, col: 3 },
-  '짚신벌레': { row: 1, col: 0 },
-  '아메바': { row: 1, col: 1 },
-  '해캄': { row: 1, col: 2 },
-  '대장균': { row: 2, col: 0 },
-  '젖산균': { row: 2, col: 1 },
-  '고초균': { row: 2, col: 2 },
-  '아세트산균': { row: 2, col: 3 },
-  '화산 버섯': { row: 3, col: 0 },
-  '네온 곰팡이': { row: 3, col: 1 },
-  '포자버섯 젤리': { row: 3, col: 2 },
-  '제트 짚신벌레': { row: 3, col: 3 },
-  '블랙홀 아메바': { row: 3, col: 4 },
-  '우주 태양 아메바': { row: 4, col: 0 },
-  '메가 이스트': { row: 4, col: 1 }
+  '버섯': 0,
+  '곰팡이': 1,
+  '짚신벌레': 2,
+  '아메바': 3,
+  '해캄': 4,
+  '대장균': 5,
+  '젖산균': 6,
+  '이스트': 7,
+  '고초균': 8,
+  '화산 버섯': 9,
+  '네온 곰팡이': 10,
+  '메가 이스트': 11,
+  '누룩곰팡이': 12,
+  '아세트산균': 13,
+  '슈퍼 젖산균': 14,
+  '구름 이스트': 15,
+  '매콤 젖산균': 16,
+  '달콤 이스트': 17,
+  '황금 젖산균': 18,
+  '끈적 고초균': 19
 };
 
-// 2. 미생물 종류별 벡터 일러스트 아이콘 모음 (도감 및 조합소 화면 연동용)
+// 2. 미생물 종류별 픽셀 일러스트 아이콘 모음 (도감 및 조합소 화면 연동용)
 export function MicrobeIcon({ name, className = "w-16 h-16", glowColor = "#00ffff" }) {
   const normName = name || '';
 
-  const sprite = spriteMapping[normName];
-  if (sprite) {
-    const col = sprite.col;
-    const row = sprite.row;
-    const posX = col * 25;
-    const posY = row * 25;
+  const spriteIndex = spriteMapping[normName];
+  if (spriteIndex !== undefined) {
     return (
       <div 
-        className={`${className} inline-block bg-no-repeat`}
+        className={`${className} inline-block bg-no-repeat flex-shrink-0`}
         style={{
-          backgroundImage: "url('/images/microbes_spritesheet.png')",
-          backgroundSize: '500% 500%',
-          backgroundPosition: `${posX}% ${posY}%`,
+          backgroundImage: `url('/images/stardew_sprites/sprite_${spriteIndex}.webp')`,
+          backgroundSize: 'contain',
+          backgroundPosition: 'center',
           imageRendering: 'pixelated',
-          filter: `drop-shadow(0 0 8px ${glowColor}88)`
+          filter: `drop-shadow(0 0 6px ${glowColor}aa)`
         }}
       />
     );

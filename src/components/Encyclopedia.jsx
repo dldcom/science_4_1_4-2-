@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { baseMicrobes, combinedMicrobes } from '../utils/recipes';
+import { baseMicrobes, combinedMicrobes, recipes } from '../utils/recipes';
 import { MicrobeIcon } from './VectorIcons';
 
 export default function Encyclopedia({ isOpen, onClose, discoveredNames }) {
@@ -19,7 +19,7 @@ export default function Encyclopedia({ isOpen, onClose, discoveredNames }) {
 
   return (
     <div className="fixed top-0 left-0 h-[100dvh] w-screen z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-6xl p-8 wood-modal flex flex-col md:flex-row gap-8 max-h-[90vh] overflow-hidden">
+      <div className="relative w-full max-w-6xl p-8 wood-modal font-pixel flex flex-col md:flex-row gap-8 max-h-[90vh] overflow-hidden">
         
         {/* 모달 닫기 */}
         <button 
@@ -62,8 +62,8 @@ export default function Encyclopedia({ isOpen, onClose, discoveredNames }) {
                   ) : (
                     <>
                       <div className="w-14 h-14 flex items-center justify-center border-4 border-dashed border-[#ced4da] rounded-full text-[#ced4da] text-3xl font-bold mb-1 font-pixel">?</div>
-                      <span className="text-lg font-medium text-[#adb5bd]">미발견 생물</span>
-                      <span className="text-xs text-[#868e96] font-pixel tracking-wider">Tier {item.tier}</span>
+                      <span className="text-lg font-bold text-[#adb5bd]">{item.name}</span>
+                      <span className="text-xs text-[#868e96] font-pixel tracking-wider">{item.type}</span>
                     </>
                   )}
                 </div>
@@ -85,7 +85,7 @@ export default function Encyclopedia({ isOpen, onClose, discoveredNames }) {
 
                 <div className="w-full flex-1 flex flex-col">
                   <span className="text-sm font-pixel font-bold uppercase tracking-wider block mb-2 text-[#6c757d] bg-[#e9ecef] inline-block mx-auto px-3 py-1 rounded-md border-2 border-[#ced4da]">
-                    {selectedItem.type} (T-{selectedItem.tier})
+                    {selectedItem.type}
                   </span>
                   <h3 className="text-4xl font-bold text-[#343a40] mb-4">
                     {selectedItem.name}
@@ -98,9 +98,32 @@ export default function Encyclopedia({ isOpen, onClose, discoveredNames }) {
                 </div>
               </div>
             ) : (
-              <div className="animate-pulse flex flex-col items-center justify-center h-full">
-                <p className="text-xl text-[#adb5bd] font-bold">아직 발견하지 못한 생물입니다.</p>
-                <p className="text-base text-[#868e96] mt-3">연구를 하거나 융합하여 획득해 보세요.</p>
+              <div className="flex flex-col items-center justify-center h-full w-full">
+                <p className="text-xl text-[#adb5bd] font-bold mb-2">아직 발견하지 못한 생물입니다</p>
+                <p className="text-3xl text-[#6c757d] font-bold mb-8">{selectedItem.name}</p>
+                
+                {(() => {
+                  const recipeEntry = Object.entries(recipes).find(([ing, res]) => res === selectedItem.name);
+                  if (recipeEntry) {
+                    const ingredients = recipeEntry[0].split('+');
+                    return (
+                      <div className="bg-[#e9ecef] border-4 border-[#ced4da] rounded-lg p-6 w-full max-w-sm flex flex-col items-center animate-fade-in">
+                        <span className="text-sm font-bold text-[#868e96] mb-4 bg-white px-3 py-1 rounded-full border-2 border-[#dee2e6]">합성 힌트</span>
+                        <div className="flex items-center gap-3 text-xl font-bold text-[#495057]">
+                          <span className="bg-white px-4 py-2 rounded-md border-2 border-[#ced4da] shadow-sm">{ingredients[0]}</span>
+                          <span className="text-[#adb5bd]">+</span>
+                          <span className="bg-white px-4 py-2 rounded-md border-2 border-[#ced4da] shadow-sm">{ingredients[1]}</span>
+                        </div>
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <div className="bg-[#e9ecef] border-4 border-[#ced4da] rounded-lg p-6 w-full max-w-sm flex flex-col items-center animate-fade-in">
+                         <span className="text-lg font-bold text-[#6c757d]">자연에서 기본적으로 발견되는 생물입니다.</span>
+                      </div>
+                    );
+                  }
+                })()}
               </div>
             )
           ) : (

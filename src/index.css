@@ -187,3 +187,11 @@ body {
   text-shadow: none;
   font-weight: bold;
 }
+
+@keyframes fadeUp {
+  0% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-30px); }
+}
+.animate-fadeUp {
+  animation: fadeUp 1s ease-out forwards;
+}

@@ -9,13 +9,20 @@ import { baseMicrobes, combinedMicrobes, microbeEmojis } from './utils/recipes';
 import { foodPlanets } from './utils/expeditions';
 import { MicrobeIcon } from './components/VectorIcons';
 
+const STORAGE_WRITE_DELAY_MS = 500;
+
 export default function App() {
   // 1. 핵심 수치 상태 관리
-  const [bioEnergy, setBioEnergy] = useState(0); // 초기 자원
-  const [sectors, setSectors] = useState(1); // 해금된 영토 단계 (기본 1등급 시작)
+  const [bioEnergy, setBioEnergy] = useState(() => {
+    const saved = localStorage.getItem('space_bioEnergy');
+    return saved !== null ? JSON.parse(saved) : 300;
+  });
+  const [bioEnergyDelta, setBioEnergyDelta] = useState(null); // 차감 애니메이션 상태
   const [microbes, setMicrobes] = useState(() => {
+    const saved = localStorage.getItem('space_microbes');
+    if (saved) return JSON.parse(saved);
     const initialList = [];
-    const namesToSpawn = ['짚신벌레', '버섯', '젖산균']; // 초기 지급 미생물
+    const namesToSpawn = []; // 초기 상태 (미생물 없음)
     namesToSpawn.forEach((name, idx) => {
       const template = baseMicrobes[name] || combinedMicrobes[name];
       if (template) {
@@ -42,20 +49,46 @@ export default function App() {
     });
     return initialList;
   });
-  const [discoveredNames, setDiscoveredNames] = useState([
-    '짚신벌레', '버섯', '젖산균'
-  ]); // 도감에 발견 처리된 미생물 목록
+  const [discoveredNames, setDiscoveredNames] = useState(() => {
+    const saved = localStorage.getItem('space_discoveredNames');
+    if (saved) return JSON.parse(saved);
+    return ['짚신벌레', '버섯', '젖산균', '이스트', '네온 곰팡이', '메가 이스트', '고초균', '누룩곰팡이', '화산 버섯'];
+  });
+
+  const [discoveryResult, setDiscoveryResult] = useState(null); // 애니메이션 완료 후 보여줄 팝업 데이터
 
   const [selectedPlanet, setSelectedPlanet] = useState(null);
 
   // 1.5. 우주 원정 상태 관리
   const [expeditions, setExpeditions] = useState(() => {
+    const saved = localStorage.getItem('space_expeditions');
+    if (saved) return JSON.parse(saved);
     const initial = {};
     foodPlanets.forEach(p => {
       initial[p.id] = { status: 'locked', timer: 0 };
     });
     return initial;
   });
+
+  // 로컬 스토리지 저장 (상태 변경 시)
+  React.useEffect(() => {
+    localStorage.setItem('space_bioEnergy', JSON.stringify(bioEnergy));
+  }, [bioEnergy]);
+
+  React.useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      localStorage.setItem('space_microbes', JSON.stringify(microbes));
+    }, STORAGE_WRITE_DELAY_MS);
+    return () => window.clearTimeout(timeoutId);
+  }, [microbes]);
+
+  React.useEffect(() => {
+    localStorage.setItem('space_discoveredNames', JSON.stringify(discoveredNames));
+  }, [discoveredNames]);
+
+  React.useEffect(() => {
+    localStorage.setItem('space_expeditions', JSON.stringify(expeditions));
+  }, [expeditions]);
 
   // 1초 단위 타이머 tick으로 원정 시간 단축 처리
   React.useEffect(() => {
@@ -134,32 +167,14 @@ export default function App() {
       ...prev,
       [planetId]: { ...prev[planetId], status: 'complete' }
     }));
-    
-    // 탐사를 완료하자마자 바로 스토리보드 모달 띄우기
-    const planet = foodPlanets.find(p => p.id === planetId);
-    if (planet) {
-      setSelectedPlanet(planet);
-      setActiveModal('storyboard');
-    }
   };
 
   const handleStoryboardClose = () => {
     if (selectedPlanet) {
       const planetId = selectedPlanet.id;
-      // 1. 미생물을 배양조로 복귀
-      setMicrobes(prev => prev.map(m => {
-        if (m.state === 'expedition' && m.targetPlanetId === planetId) {
-          return {
-            ...m,
-            state: 'returning',
-            targetPlanetId: null,
-            targetX: 4000,
-            targetY: 3000
-          };
-        }
-        return m;
-      }));
-      // 2. 행성을 보급 상태로 전환
+      // 1. 미생물은 소멸하지 않고 계속 행성 주위를 공전합니다!
+      
+      // 2. 보급선 개통 상태로 전환
       setExpeditions(prev => ({
         ...prev,
         [planetId]: { ...prev[planetId], status: 'supplying' }
@@ -180,40 +195,16 @@ export default function App() {
   // 3. 돋보기 관찰 상태 관리
   const [focusedMicrobe, setFocusedMicrobe] = useState(null);
 
-  // 실시간으로 변하는 물리/자원 값을 반영하기 위해 전체 리스트에서 찾아서 매핑
-  const liveFocusedMicrobe = focusedMicrobe 
-    ? (microbes.find(m => m.id === focusedMicrobe.id) || focusedMicrobe)
-    : null;
-
   // 4. 영토 수용량 설계
-  const getMicrobeLimit = () => {
-    if (sectors === 1) return 6;
-    if (sectors === 2) return 12;
-    return 20; // 3단계
-  };
+  const getMicrobeLimit = () => 20;
 
-  const getUpgradeCost = () => {
-    if (sectors === 1) return 150;
-    if (sectors === 2) return 400;
-    return 0; // 이미 최고 단계
-  };
-
-  // 5. 퀴즈 성공 시 신규 1티어 미생물 소환
+  // 5. 퀴즈 성공 시 신규 1티어 생물 소환
   const handleQuizSuccess = (microbeName, targetX, targetY) => {
-    const limit = getMicrobeLimit();
-    if (microbes.length >= limit) {
-      setAlertMessage(`[배양 용량 초과] 최대 한도(${limit}마리)에 도달했습니다. 영토 확장이나 합성을 통해 공간을 확보해 주세요!`);
-      return;
-    }
-
     const template = baseMicrobes[microbeName];
     if (!template) return;
 
-    // 성운 1~3 중 현재 해금된 것 중 랜덤 타겟 지정
-    const unlockedNebulas = [1];
-    if (sectors >= 2) unlockedNebulas.push(2);
-    if (sectors >= 3) unlockedNebulas.push(3);
-    const targetNebulaId = unlockedNebulas[Math.floor(Math.random() * unlockedNebulas.length)];
+    // 성운 1~3 중 랜덤 타겟 지정
+    const targetNebulaId = [1, 2, 3][Math.floor(Math.random() * 3)];
 
     const newMicrobe = {
       id: `${Date.now()}-${Math.random()}`,
@@ -244,23 +235,31 @@ export default function App() {
     }
   };
 
-  // 6. 합성 성공 시 두 미생물 융합 소멸 후 변종 탄생
+  // 6. 합성 성공 시 두 미생물 융합 소멸 후 변종 탄생 (애니메이션 연출을 위한 상태 처리)
   const handleSynthesizeSuccess = (parentIdA, parentIdB, resultName) => {
     const template = combinedMicrobes[resultName];
     if (!template) return;
 
-    // 1~3 성운 중 랜덤 타겟 지정
-    const unlockedNebulas = [1];
-    if (sectors >= 2) unlockedNebulas.push(2);
-    if (sectors >= 3) unlockedNebulas.push(3);
-    const targetNebulaId = unlockedNebulas[Math.floor(Math.random() * unlockedNebulas.length)];
-
     setMicrobes(prev => {
-      // 부모 생물 2개 제외 필터링
-      const filtered = prev.filter(m => m.id !== parentIdA && m.id !== parentIdB);
-      
-      const newMicrobe = {
-        id: `${Date.now()}-${Math.random()}`,
+      const mA = prev.find(m => m.id === parentIdA);
+      const mB = prev.find(m => m.id === parentIdB);
+      if (!mA || !mB) return prev;
+
+      const mergeTargetX = (mA.x + mB.x) / 2;
+      const mergeTargetY = (mA.y + mB.y) / 2;
+      const newMicrobeId = `${Date.now()}-${Math.random()}`;
+
+      // 1. 기존 부모들은 'merging' 상태로 변경
+      const updated = prev.map(m => {
+        if (m.id === parentIdA || m.id === parentIdB) {
+          return { ...m, state: 'merging', mergeTargetX, mergeTargetY };
+        }
+        return m;
+      });
+
+      // 2. 새로운 미생물은 'spawning' 상태로 추가 (SpaceCanvas가 부모 도달 확인 후 활성화)
+      updated.push({
+        id: newMicrobeId,
         name: template.name,
         type: template.type,
         tier: template.tier,
@@ -268,18 +267,17 @@ export default function App() {
         miningSpeed: template.miningSpeed,
         capacity: template.capacity,
         avatarSvg: template.avatarSvg,
-        x: 4000 + (Math.random() - 0.5) * 240, // ±120px 범위로 골고루 분산 소환
-        y: 3000 + (Math.random() - 0.5) * 240,
-        vx: (Math.random() - 0.5) * 0.8,
-        vy: (Math.random() - 0.5) * 0.8,
-        state: 'mining',
+        x: mergeTargetX,
+        y: mergeTargetY,
+        vx: 0, vy: 0, angle: 0,
+        state: 'spawning',
         energyCurrent: 0,
         energyCapacity: template.capacity,
         speed: template.name === '제트 짚신벌레' ? 2.5 : 1.2,
-        targetNebulaId: targetNebulaId
-      };
+        mergeParents: [parentIdA, parentIdB]
+      });
 
-      return [...filtered, newMicrobe];
+      return updated;
     });
 
     // 합성 시 돋보기 포커싱 상태가 해제되도록 안전장치 설정
@@ -291,6 +289,15 @@ export default function App() {
     if (!discoveredNames.includes(resultName)) {
       setDiscoveredNames(prev => [...prev, resultName]);
     }
+
+    setActiveModal(null);
+  };
+
+  const handleSpawnAnimationComplete = (microbeName) => {
+    const template = combinedMicrobes[microbeName] || baseMicrobes[microbeName];
+    if (template) {
+      setDiscoveryResult(template);
+    }
   };
 
   // 7. 자원 수확량 누적 함수
@@ -298,18 +305,25 @@ export default function App() {
     setBioEnergy(prev => prev + amount);
   };
 
-  // 8. 우주 영토 확장(업그레이드) 함수
-  const handleExpandSector = () => {
-    const cost = getUpgradeCost();
-    if (cost === 0) return;
-
-    if (bioEnergy < cost) {
-      setAlertMessage(`바이오 에너지가 부족합니다. (필요 자원: ${cost} Bio)`);
+  // 연구(퀴즈) 시작 핸들러
+  const handleOpenQuiz = () => {
+    if (bioEnergy < 300) {
+      setAlertMessage(`연구에 필요한 바이오 에너지가 부족합니다.\n(필요 자원: 300 Bio)`);
       return;
     }
+    setBioEnergy(prev => prev - 300);
+    setBioEnergyDelta({ amount: "-300", id: Date.now() });
+    setActiveModal('quiz');
+  };
 
-    setBioEnergy(prev => prev - cost);
-    setSectors(prev => prev + 1);
+  const handleResetGame = () => {
+    if (window.confirm("정말로 모든 데이터를 초기화하고 처음부터 다시 시작하시겠습니까?")) {
+      localStorage.removeItem('space_bioEnergy');
+      localStorage.removeItem('space_microbes');
+      localStorage.removeItem('space_discoveredNames');
+      localStorage.removeItem('space_expeditions');
+      window.location.reload();
+    }
   };
 
   return (
@@ -319,23 +333,34 @@ export default function App() {
         <SpaceCanvas
           microbes={microbes}
           setMicrobes={setMicrobes}
-          sectors={sectors}
           addBioEnergy={addBioEnergy}
           focusedMicrobe={focusedMicrobe}
           setFocusedMicrobe={setFocusedMicrobe}
           expeditions={expeditions}
           onPlanetClick={handlePlanetClick}
+          onSpawnAnimationComplete={handleSpawnAnimationComplete}
         />
 
         {/* 2. 맵 위에 플로팅되는 최소형 HUD (모바일 스택 대응) */}
         <div className="absolute top-4 left-4 right-4 flex flex-col sm:flex-row gap-2.5 justify-between items-center sm:items-start pointer-events-none z-10 select-none">
           {/* 좌측 자원 현황 (그레이 패널) */}
           <div className="flex gap-4 items-center wood-panel p-4 backdrop-blur-md pointer-events-auto">
-            <div>
+            <div className="relative">
               <span className="text-sm text-[#adb5bd] block font-bold leading-none mb-1 font-pixel tracking-wider">BIO-ENERGY</span>
               <span className="text-3xl font-bold font-sans text-[#343a40] leading-none">
-                {bioEnergy} <span className="text-base font-bold text-[#6c757d]">Bio</span>
+                {Math.floor(bioEnergy)} <span className="text-base font-bold text-[#6c757d]">Bio</span>
               </span>
+              
+              {/* Bio 차감 애니메이션 */}
+              {bioEnergyDelta && (
+                <div 
+                  key={bioEnergyDelta.id}
+                  className="absolute left-1/2 -top-4 -translate-x-1/2 text-red-500 font-bold text-2xl font-pixel drop-shadow-lg animate-fadeUp pointer-events-none whitespace-nowrap"
+                  onAnimationEnd={() => setBioEnergyDelta(null)}
+                >
+                  {bioEnergyDelta.amount}
+                </div>
+              )}
             </div>
             <div className="h-10 w-[2px] bg-[#dee2e6]" />
             <div>
@@ -345,33 +370,22 @@ export default function App() {
               </span>
             </div>
           </div>
-
-          {/* 우측 개척 레벨 및 영토 확장 버튼 */}
-          <div className="flex items-center gap-4 wood-panel p-3 backdrop-blur-md pointer-events-auto">
-            <div className="text-right">
-              <span className="text-sm text-[#adb5bd] block font-bold leading-none mb-1 font-pixel tracking-wider">SECTOR GRADE</span>
-              <span className="text-base font-bold text-[#868e96] font-sans">SECTOR 0{sectors}</span>
-            </div>
-            {sectors < 3 ? (
-              <button
-                onClick={handleExpandSector}
-                className="px-4 py-2 pixel-btn-green text-sm font-bold cursor-pointer"
-              >
-                EXPAND ({getUpgradeCost()} Bio)
-              </button>
-            ) : (
-              <span className="px-4 py-2 bg-[#e9ecef] text-[#495057] font-bold text-sm rounded-md border-2 border-[#ced4da] font-pixel tracking-wider">MAX GRADE</span>
-            )}
-          </div>
+          
+          <button 
+            onClick={handleResetGame}
+            className="pointer-events-auto px-4 py-2 bg-[#f8f9fa] text-[#adb5bd] border-4 border-[#dee2e6] hover:bg-[#e9ecef] hover:text-[#868e96] active:translate-y-1 rounded-md text-sm font-bold font-pixel cursor-pointer transition-all h-full max-h-[82px] flex items-center shadow-sm"
+          >
+            다시하기
+          </button>
         </div>
 
         {/* 3. 플로팅 제어 버튼들 (모바일에서 줄바꿈이 되도록 반응형 래핑 패치) */}
         <div className="absolute bottom-6 left-6 right-6 flex flex-wrap gap-4 z-10 pointer-events-none max-w-[calc(100vw-32px)]">
           <button
-            onClick={() => setActiveModal('quiz')}
+            onClick={handleOpenQuiz}
             className="pointer-events-auto px-6 py-3 pixel-btn-orange text-lg font-bold cursor-pointer"
           >
-            연구 (퀴즈)
+            연구 (300 Bio)
           </button>
           <button
             onClick={() => setActiveModal('synth')}
@@ -390,17 +404,17 @@ export default function App() {
         {/* 4. 슬라이딩 돋보기 모니터 (우측 하단 - 관찰 중일 때만 스르륵 나타남) */}
         <div 
           className={`absolute bottom-24 right-6 w-[340px] wood-panel p-5 z-10 transition-all duration-300 ${
-            liveFocusedMicrobe 
+            focusedMicrobe 
               ? 'translate-y-0 opacity-100' 
               : 'translate-y-[400px] opacity-0 pointer-events-none'
           }`}
         >
-          {liveFocusedMicrobe && (
+          {focusedMicrobe && (
             <div className="flex flex-col gap-4 text-left">
               {/* 돋보기 상단 타이틀 & 닫기 버튼 */}
               <div className="flex justify-between items-center">
                 <h4 className="text-xl font-bold text-[#343a40] font-sans leading-none">
-                  {liveFocusedMicrobe.name}
+                  {focusedMicrobe.name}
                 </h4>
                 <button 
                   onClick={() => setFocusedMicrobe(null)}
@@ -410,29 +424,31 @@ export default function App() {
                 </button>
               </div>
               
-              {/* 스펙 라벨 */}
+              {/* 속성 배지 */}
               <div className="flex justify-between items-center">
                 <span className="inline-block px-3 py-1 bg-[#e9ecef] border-2 border-[#ced4da] text-xs font-bold text-[#6c757d] rounded-md font-pixel uppercase tracking-wider leading-none">
-                  {liveFocusedMicrobe.type} (T-{liveFocusedMicrobe.tier})
+                  {focusedMicrobe.type}
                 </span>
               </div>
 
               {/* 돋보기 홀로그램 스캐너 (그레이 프레임) */}
               <div className="relative w-full aspect-video bg-[#f8f9fa] border-4 border-[#dee2e6] rounded-lg overflow-hidden flex items-center justify-center shadow-inner">
-                <MicrobeIcon name={liveFocusedMicrobe.name} className="w-24 h-24" glowColor={liveFocusedMicrobe.glowColor} />
+                <MicrobeIcon name={focusedMicrobe.name} className="w-24 h-24" glowColor={focusedMicrobe.glowColor} />
               </div>
 
               {/* 생물 설명 (초4 수준 맞춤) */}
               <div className="text-sm text-[#495057] leading-relaxed font-sans max-h-[100px] overflow-y-auto bg-[#f1f3f5] p-3 rounded-lg border-2 border-[#dee2e6] custom-scrollbar">
-                <p>{(baseMicrobes[liveFocusedMicrobe.name] || combinedMicrobes[liveFocusedMicrobe.name])?.description}</p>
+                <p>{(baseMicrobes[focusedMicrobe.name] || combinedMicrobes[focusedMicrobe.name])?.description}</p>
               </div>
 
               {/* 속성 바 */}
-              <div className="border-t-2 border-[#dee2e6] pt-3 flex justify-between items-center text-sm font-pixel">
-                <span className="text-[#6c757d] font-bold">채집 에너지</span>
-                <span className="text-[#343a40] font-bold text-base">
-                  {Math.round(liveFocusedMicrobe.energyCurrent)} / {liveFocusedMicrobe.energyCapacity}
-                </span>
+              <div className="border-t-2 border-[#dee2e6] pt-3 flex flex-col gap-2 text-sm font-pixel">
+                <div className="flex justify-between items-center">
+                  <span className="text-[#6c757d] font-bold">최대 채집량</span>
+                  <span className="text-[#343a40] font-bold text-base">
+                    {focusedMicrobe.energyCapacity} bio
+                  </span>
+                </div>
               </div>
             </div>
           )}
@@ -454,6 +470,7 @@ export default function App() {
 
       {activeModal === 'ency' && (
         <Encyclopedia 
+          isOpen={true}
           microbes={microbes} 
           discoveredNames={discoveredNames}
           onClose={() => setActiveModal(null)} 
@@ -476,6 +493,36 @@ export default function App() {
         />
       )}
 
+      {/* 합성/발견 성공 팝업 (애니메이션 완료 후 표시) */}
+      {discoveryResult && (
+        <div className="fixed inset-0 bg-black/50 flex flex-col items-center justify-center p-4 z-[100] animate-fade-in backdrop-blur-sm">
+          <div className="wood-modal max-w-lg w-full flex flex-col items-center justify-center p-10 rounded-xl shadow-2xl relative border-4 border-[#8b5a2b]">
+            {/* 빵빠레 효과 */}
+            <div className="w-40 h-40 rounded-full bg-[#f8f9fa] border-8 border-[#dee2e6] flex items-center justify-center shadow-lg mb-6 animate-bounce">
+              <MicrobeIcon name={discoveryResult.name} className="w-24 h-24" glowColor={discoveryResult.glowColor} />
+            </div>
+            
+            <span className="text-sm font-pixel font-bold text-[#868e96] uppercase tracking-widest mb-2 bg-[#e9ecef] px-3 py-1 rounded-md border-2 border-[#dee2e6]">
+              SYNTHESIS SUCCESS!
+            </span>
+            <h3 className="text-3xl font-bold text-[#212529] font-sans mb-4">
+              [{discoveryResult.name}] 발견!
+            </h3>
+            
+            <p className="text-center text-[#495057] text-base mb-8 leading-relaxed font-bold bg-[#f8f9fa] p-4 rounded-lg border-2 border-[#dee2e6] w-full">
+              {discoveryResult.description}
+            </p>
+
+            <button
+              onClick={() => setDiscoveryResult(null)}
+              className="px-8 py-3 pixel-btn-gray rounded-xl text-xl font-bold cursor-pointer transition-all shadow-lg w-full max-w-xs"
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* 커스텀 알림창 (alert 대체) */}
       {alertMessage && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -488,7 +535,12 @@ export default function App() {
                 <div className="absolute bottom-2 left-2 w-2 h-2 rounded-full bg-[#e9ecef]"></div>
                 <div className="absolute bottom-2 right-2 w-2 h-2 rounded-full bg-[#e9ecef]"></div>
                 <p className="text-[#495057] text-lg sm:text-xl font-bold font-sans text-center whitespace-pre-wrap leading-relaxed break-keep">
-                  {alertMessage}
+                  {alertMessage.split('\n').map((line, i) => (
+                    <span key={i}>
+                      {line}
+                      {i < alertMessage.split('\n').length - 1 && <br />}
+                    </span>
+                  ))}
                 </p>
               </div>
               

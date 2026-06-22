@@ -92,6 +92,8 @@ export default function StoryboardModal({ planet, onClose }) {
                 transition={{ duration: 0.4 }}
                 className="absolute inset-0 w-full h-full object-cover"
                 alt="Story illustration"
+                loading="lazy"
+                decoding="async"
               />
             </AnimatePresence>
             <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />

@@ -376,20 +376,28 @@ export default function SpaceCanvas({
   // 타일 텍스처 이미지 Refs
   const brightSpaceTileImgRef = useRef(null);
   const pondWaterTileImgRef = useRef(null);
+  const planetsSpritesheetRef = useRef(null);
+  const iconsSpritesheetRef = useRef(null);
+  const brightSpacePatternRef = useRef(null);
+  const pondWaterPatternRef = useRef(null);
 
-  // 1. 타일 이미지 텍스처 로딩
+  // 1. 타일 이미지 및 스프라이트시트 로딩
   useEffect(() => {
     const spaceImg = new Image();
     spaceImg.src = '/images/bright_space_tile.png';
-    spaceImg.onload = () => {
-      brightSpaceTileImgRef.current = spaceImg;
-    };
+    spaceImg.onload = () => { brightSpaceTileImgRef.current = spaceImg; };
 
     const waterImg = new Image();
     waterImg.src = '/images/pond_water_tile.png';
-    waterImg.onload = () => {
-      pondWaterTileImgRef.current = waterImg;
-    };
+    waterImg.onload = () => { pondWaterTileImgRef.current = waterImg; };
+
+    const pSheet = new Image();
+    pSheet.src = '/images/planets_spritesheet.webp';
+    pSheet.onload = () => { planetsSpritesheetRef.current = pSheet; };
+
+    const iSheet = new Image();
+    iSheet.src = '/images/icons_spritesheet.webp';
+    iSheet.onload = () => { iconsSpritesheetRef.current = iSheet; };
   }, []);
 
   // 2. 미생물 스프라이트 시트 이미지 로딩
@@ -477,6 +485,38 @@ export default function SpaceCanvas({
   const textPopupsRef = useRef([]);
   const microbesRef = useRef(microbes);
 
+  const spawnParticle = (props) => {
+    const pool = particlesRef.current;
+    for (let i = 0; i < pool.length; i++) {
+      if (!pool[i].active) {
+        Object.assign(pool[i], {
+          isFoodParticle: false,
+          isPixelStar: false,
+          isBubble: false
+        }, props, { active: true });
+        return;
+      }
+    }
+    pool.push({
+      isFoodParticle: false,
+      isPixelStar: false,
+      isBubble: false,
+      ...props,
+      active: true
+    });
+  };
+
+  const spawnTextPopup = (props) => {
+    const pool = textPopupsRef.current;
+    for (let i = 0; i < pool.length; i++) {
+      if (!pool[i].active) {
+        Object.assign(pool[i], props, { active: true });
+        return;
+      }
+    }
+    pool.push({ ...props, active: true });
+  };
+
   // props로 전달받은 미생물 목록과 로컬 Ref 목록 간 유연한 동기화
   useEffect(() => {
     const currentRefMap = new Map(microbesRef.current.map(m => [m.id, m]));
@@ -516,7 +556,7 @@ export default function SpaceCanvas({
         for (let i = 0; i < 25; i++) {
           const angleVal = Math.random() * Math.PI * 2;
           const pSpeed = 1.5 + Math.random() * 4.0;
-          particlesRef.current.push({
+          spawnParticle({
             x: newM.x,
             y: newM.y,
             vx: Math.cos(angleVal) * pSpeed,
@@ -587,13 +627,13 @@ export default function SpaceCanvas({
               energyCurrent = energyCapacity;
               state = 'returning';
             }
-            textPopupsRef.current.push({
+            spawnTextPopup({
               x: x, y: y - 12, text: "+1 Bio", color: m.glowColor || '#ffca28', alpha: 1.0, life: 40
             });
             for (let k = 0; k < 5; k++) {
               const angleVal = Math.random() * Math.PI * 2;
               const pSpeed = 0.5 + Math.random() * 1.5;
-              particlesRef.current.push({
+              spawnParticle({
                 x: x, y: y, vx: Math.cos(angleVal) * pSpeed, vy: Math.sin(angleVal) * pSpeed,
                 color: '#ffca28', size: 2 + Math.floor(Math.random() * 2), life: 15 + Math.floor(Math.random() * 8), isPixelStar: true
               });
@@ -615,13 +655,13 @@ export default function SpaceCanvas({
           if (dist < collector.radius + 10) {
             const harvestAmount = Math.round(energyCapacity);
             addBioEnergy(harvestAmount);
-            textPopupsRef.current.push({
+            spawnTextPopup({
               x: x, y: y - 12, text: `+${harvestAmount}`, color: m.glowColor, alpha: 1.0, life: 40
             });
             for (let k = 0; k < 10; k++) {
               const angleVal = Math.random() * Math.PI * 2;
               const pSpeed = 1.0 + Math.random() * 2.5;
-              particlesRef.current.push({
+              spawnParticle({
                 x: collector.x, y: collector.y, vx: Math.cos(angleVal) * pSpeed, vy: Math.sin(angleVal) * pSpeed,
                 color: m.glowColor || '#ffb300', size: 2 + Math.floor(Math.random() * 2), life: 20 + Math.floor(Math.random() * 12), isPixelStar: true
               });
@@ -824,8 +864,10 @@ export default function SpaceCanvas({
 
       // 5.1. 우주 배경 (밝은 우주 무봉제 타일 렌더링)
       if (brightSpaceTileImgRef.current) {
-        const spacePattern = ctx.createPattern(brightSpaceTileImgRef.current, 'repeat');
-        ctx.fillStyle = spacePattern;
+        if (!brightSpacePatternRef.current) {
+          brightSpacePatternRef.current = ctx.createPattern(brightSpaceTileImgRef.current, 'repeat');
+        }
+        ctx.fillStyle = brightSpacePatternRef.current;
         ctx.fillRect(cameraRef.current.x, cameraRef.current.y, dimensions.width, dimensions.height);
       } else {
         ctx.fillStyle = '#f0f4ff';
@@ -878,8 +920,10 @@ export default function SpaceCanvas({
       // 5.2. 중앙 바이오 배양 연못 (Pond) 렌더링
       ctx.save();
       if (pondWaterTileImgRef.current) {
-        const waterPattern = ctx.createPattern(pondWaterTileImgRef.current, 'repeat');
-        ctx.fillStyle = waterPattern;
+        if (!pondWaterPatternRef.current) {
+          pondWaterPatternRef.current = ctx.createPattern(pondWaterTileImgRef.current, 'repeat');
+        }
+        ctx.fillStyle = pondWaterPatternRef.current;
       } else {
         // Fallback 그라데이션
         const waterGrd = ctx.createLinearGradient(minX, minY, minX, maxY);
@@ -957,7 +1001,7 @@ export default function SpaceCanvas({
       ctx.roundRect(minX + shrink, minY + shrink, (maxX - minX) - shrink * 2, (maxY - minY) - shrink * 2, 19);
       ctx.clip('evenodd');
 
-      foodPlanets.forEach(planet => {
+      foodPlanets.forEach((planet, planetIdx) => {
         const exp = expeditions && expeditions[planet.id];
         if (exp && (exp.status === 'exploring' || exp.status === 'supplying')) {
           
@@ -1036,8 +1080,10 @@ export default function SpaceCanvas({
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
             if (pondWaterTileImgRef.current) {
-              const waterPattern = ctx.createPattern(pondWaterTileImgRef.current, 'repeat');
-              ctx.strokeStyle = waterPattern;
+              if (!pondWaterPatternRef.current) {
+                pondWaterPatternRef.current = ctx.createPattern(pondWaterTileImgRef.current, 'repeat');
+              }
+              ctx.strokeStyle = pondWaterPatternRef.current;
             } else {
               ctx.strokeStyle = '#00e5ff';
             }
@@ -1069,7 +1115,7 @@ export default function SpaceCanvas({
               // 배양조 가장자리에 도착한 순간(주기 완료) 자원 획득 처리
               if (offsetTime % 300 === 0 && time > 0) {
                 addBioEnergy(planet.rewardAmount);
-                textPopupsRef.current.push({
+                spawnTextPopup({
                   x: edgeX,
                   y: edgeY - 20,
                   text: `+${planet.rewardAmount}`,
@@ -1081,7 +1127,7 @@ export default function SpaceCanvas({
                 // 도착 파티클 효과
                 for (let k = 0; k < 5; k++) {
                   const angleVal = Math.random() * Math.PI * 2;
-                  particlesRef.current.push({
+                  spawnParticle({
                     x: edgeX, y: edgeY, 
                     vx: Math.cos(angleVal) * 2, vy: Math.sin(angleVal) * 2,
                     color: planet.color || '#4caf50', size: 3, life: 20, isPixelStar: true
@@ -1117,7 +1163,7 @@ export default function SpaceCanvas({
 
       // 보글보글 거품 기포 발생
       if (time % 10 === 0 && Math.random() < 0.35) {
-        particlesRef.current.push({
+        spawnParticle({
           x: minX + 30 + Math.random() * (maxX - minX - 60),
           y: maxY - 10,
           vx: (Math.random() - 0.5) * 0.4,
@@ -1184,7 +1230,7 @@ export default function SpaceCanvas({
       });
 
       // 5.4. 개척 식품 행성들 렌더링
-      foodPlanets.forEach(planet => {
+      foodPlanets.forEach((planet, planetIdx) => {
         const exp = expeditions && expeditions[planet.id];
         const status = exp ? exp.status : 'locked';
 
@@ -1292,30 +1338,43 @@ export default function SpaceCanvas({
       ctx.restore();
 
       // 5.7. 다양한 파티클 갱신 및 그리기
-      const activeParticles = [];
       particlesRef.current.forEach(p => {
+        if (!p.active) return;
+
         if (p.isFoodParticle) {
           p.progress += p.speed;
           const px = p.x + (p.targetX - p.x) * p.progress;
           const py = p.y + (p.targetY - p.y) * p.progress;
 
-          ctx.save();
-          ctx.font = '16px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(p.foodIcon, px, py);
-
-          ctx.fillStyle = p.color + '33';
-          ctx.beginPath();
-          ctx.arc(px, py, 7, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
+          const iSheet = iconsSpritesheetRef.current;
+          if (iSheet && p.planetIdx !== undefined) {
+            ctx.save();
+            const col = p.planetIdx % 4;
+            const row = Math.floor(p.planetIdx / 4);
+            ctx.drawImage(
+              iSheet,
+              col * 32, row * 32, 32, 32,
+              px - 12, py - 12, 24, 24
+            );
+            ctx.restore();
+          } else {
+            ctx.save();
+            ctx.font = '16px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(p.foodIcon, px, py);
+            ctx.fillStyle = p.color + '33';
+            ctx.beginPath();
+            ctx.arc(px, py, 7, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
 
           if (p.progress >= 1.0) {
             // 포탈 도착 시 자원 추가 및 팝업
             addBioEnergy(p.rewardAmount);
             
-            textPopupsRef.current.push({
+            spawnTextPopup({
               x: collector.x,
               y: collector.y - 12 - Math.random() * 20,
               text: `+${p.rewardAmount}`,
@@ -1328,7 +1387,7 @@ export default function SpaceCanvas({
             for (let i = 0; i < 6; i++) {
               const angleVal = Math.random() * Math.PI * 2;
               const pSpeed = 0.8 + Math.random() * 1.5;
-              activeParticles.push({
+              spawnParticle({
                 x: collector.x,
                 y: collector.y,
                 vx: Math.cos(angleVal) * pSpeed,
@@ -1339,8 +1398,7 @@ export default function SpaceCanvas({
                 isPixelStar: true
               });
             }
-          } else {
-            activeParticles.push(p);
+            p.active = false;
           }
         } else if (p.isPixelStar) {
           p.x += p.vx;
@@ -1354,9 +1412,7 @@ export default function SpaceCanvas({
           ctx.fillRect(p.x - p.size/2, p.y - p.size/2, p.size, p.size);
           ctx.restore();
 
-          if (p.life > 0) {
-            activeParticles.push(p);
-          }
+          if (p.life <= 0) p.active = false;
         } else if (p.isBubble) {
           p.x += p.vx;
           p.y += p.vy;
@@ -1370,9 +1426,7 @@ export default function SpaceCanvas({
           ctx.stroke();
           ctx.restore();
 
-          if (p.life > 0 && p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY) {
-            activeParticles.push(p);
-          }
+          if (p.life <= 0 || p.x < minX || p.x > maxX || p.y < minY || p.y > maxY) p.active = false;
         } else {
           // 광원 채굴 파티클
           p.progress += p.speed;
@@ -1388,12 +1442,9 @@ export default function SpaceCanvas({
           ctx.fill();
           ctx.restore();
 
-          if (p.progress < 1.0) {
-            activeParticles.push(p);
-          }
+          if (p.progress >= 1.0) p.active = false;
         }
       });
-      particlesRef.current = activeParticles;
 
       // 5.8. 미생물 무리 렌더링
       microbesRef.current.forEach(m => {
@@ -1430,7 +1481,9 @@ export default function SpaceCanvas({
       });
 
       // 5.9. 자원 획득 텍스트 팝업 렌더링
-      textPopupsRef.current.forEach((t, idx) => {
+      textPopupsRef.current.forEach(t => {
+        if (!t.active) return;
+
         ctx.save();
         ctx.fillStyle = t.color;
         ctx.shadowBlur = 4;
@@ -1446,7 +1499,7 @@ export default function SpaceCanvas({
         t.alpha = t.life / 40;
 
         if (t.life <= 0) {
-          textPopupsRef.current.splice(idx, 1);
+          t.active = false;
         }
       });
 

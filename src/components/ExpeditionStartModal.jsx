@@ -5,6 +5,18 @@ export default function ExpeditionStartModal({ planet, microbes, onClose, onStar
   if (!planet) return null;
 
   const requiredName = planet.requiredMicrobe;
+  const planetIndex = planet.id - 1;
+  const col = planetIndex % 4;
+  const row = Math.floor(planetIndex / 4);
+  const iconStyle = {
+    backgroundImage: `url('/images/icons_spritesheet.webp')`,
+    backgroundPosition: `-${col * 32}px -${row * 32}px`,
+    width: '32px',
+    height: '32px',
+    display: 'inline-block',
+    transform: 'scale(1.5)',
+    transformOrigin: 'center'
+  };
   const availableMicrobe = microbes.find(m => m.name === requiredName && m.state !== 'expedition');
   const hasMicrobe = !!availableMicrobe;
 
@@ -18,7 +30,7 @@ export default function ExpeditionStartModal({ planet, microbes, onClose, onStar
       >
         <div className="p-4 wood-panel-dark border-t-0 border-l-0 border-r-0 border-b-4 flex justify-between items-center rounded-none">
           <h2 className="text-xl font-bold text-[#343a40] flex items-center gap-2">
-            <span className="text-3xl">{planet.foodIcon}</span> {planet.name} 탐사
+            <div style={iconStyle} className="mr-2"></div> {planet.name} 탐사
           </h2>
           <button 
             onClick={onClose}
@@ -30,7 +42,7 @@ export default function ExpeditionStartModal({ planet, microbes, onClose, onStar
         
         <div className="p-6 flex flex-col items-center gap-6 wood-panel border-0 rounded-none">
           <div className="w-24 h-24 rounded-full border-4 border-[#ced4da] bg-white flex items-center justify-center shadow-inner text-5xl">
-            {planet.foodIcon}
+            <div style={{ ...iconStyle, transform: 'scale(2.5)' }}></div>
           </div>
 
           <div className="w-full bg-white p-4 rounded-xl border-4 border-[#dee2e6] text-center shadow-inner">

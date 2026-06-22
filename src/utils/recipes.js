@@ -119,7 +119,7 @@ export const combinedMicrobes = {
     type: '균류 (변종)',
     tier: 2,
     glowColor: '#ff3700',
-    description: '뜨거운 화산의 열기를 머금고 태어난 버섯이에요. 갓에서 엄청난 열풍과 불꽃을 뿜어냅니다!',
+    description: '뜨거운 화산의 열기를 듬뿍 받고 태어난 버섯이에요! 머리(갓)에서 화산 폭발처럼 엄청난 열풍과 불꽃을 뿜어낸답니다.',
     miningSpeed: 2.5,
     capacity: 20,
     avatarSvg: 'volcano_mushroom'
@@ -129,57 +129,17 @@ export const combinedMicrobes = {
     type: '균류 (변종)',
     tier: 2,
     glowColor: '#00ffcc',
-    description: '우주의 신비한 에너지를 받아 반짝반짝 야광 빛을 내는 곰팡이에요. 어두운 곳에서도 아주 잘 보여요.',
+    description: '어두운 우주에서도 반짝반짝 빛을 내는 야광 곰팡이에요! 신비한 포자를 뿜어내어 밤하늘의 별처럼 예쁘게 빛나요.',
     miningSpeed: 1.5,
     capacity: 30,
     avatarSvg: 'neon_mold'
-  },
-  '포자버섯 젤리': {
-    name: '포자버섯 젤리',
-    type: '균류 (변종)',
-    tier: 2,
-    glowColor: '#dd00ff',
-    description: '버섯과 곰팡이가 합쳐져서 말랑말랑한 젤리 괴물이 되었어요! 젤리 같은 몸으로 뭐든지 찰싹 달라붙어요.',
-    miningSpeed: 2.2,
-    capacity: 25,
-    avatarSvg: 'spore_jelly'
-  },
-  '제트 짚신벌레': {
-    name: '제트 짚신벌레',
-    type: '원생생물 (변종)',
-    tier: 2,
-    glowColor: '#0088ff',
-    description: '몸에 난 털들을 로켓 엔진처럼 써서 우주 공간을 쌩쌩 날아다니는 엄청 빠른 짚신벌레예요!',
-    miningSpeed: 3.5,
-    capacity: 15,
-    avatarSvg: 'jet_paramecium'
-  },
-  '블랙홀 아메바': {
-    name: '블랙홀 아메바',
-    type: '원생생물 (변종)',
-    tier: 2,
-    glowColor: '#3c0068',
-    description: '진공청소기처럼 주변의 우주 먼지를 쭉쭉 빨아들이는 뚱뚱하고 힘이 센 아메바예요.',
-    miningSpeed: 1.2,
-    capacity: 60,
-    avatarSvg: 'blackhole_amoeba'
-  },
-  '우주 태양 아메바': {
-    name: '우주 태양 아메바',
-    type: '초월 변종',
-    tier: 3,
-    glowColor: '#ffae00',
-    description: '스스로 반짝반짝 빛나는 햇빛을 만들어서 주변을 환하게 비춰주는 전설의 아메바예요.',
-    miningSpeed: 5.0,
-    capacity: 50,
-    avatarSvg: 'sun_amoeba'
   },
   '메가 이스트': {
     name: '메가 이스트',
     type: '균류 (변종)',
     tier: 2,
     glowColor: '#ffb74d',
-    description: '평범한 빵을 건물 크기만큼 부풀릴 수 있는 힘을 가진 거대 이스트예요! 뽀글뽀글 거품을 아주 많이 만들어요.',
+    description: '우리가 먹는 평범한 빵을 거대한 건물 크기만큼 부풀릴 수 있는 힘 센 이스트예요! 뽀글뽀글 가스(이산화탄소)를 아주 많이 만들어요.',
     miningSpeed: 2.2,
     capacity: 22,
     avatarSvg: 'mega_yeast'
@@ -189,7 +149,7 @@ export const combinedMicrobes = {
     type: '균류 (변종)',
     tier: 2,
     glowColor: '#e0e0e0',
-    description: '딱딱한 쌀이나 콩을 부드럽게 만들어서 맛있는 된장이나 간장으로 바꿔주는 마법의 곰팡이에요.',
+    description: '딱딱한 콩이나 쌀을 부드럽게 분해해서, 짭짤하고 맛있는 간장이나 된장으로 바꿔주는 마법 같은 곰팡이랍니다!',
     miningSpeed: 1.8,
     capacity: 35,
     avatarSvg: 'koji_mold'
@@ -199,10 +159,70 @@ export const combinedMicrobes = {
     type: '세균 (변종)',
     tier: 2,
     glowColor: '#81c784',
-    description: '평범한 물이나 술을 새콤달콤한 식초로 바꿔주는 신기한 세균이에요. 냄새를 맡으면 코가 찡해요!',
+    description: '물을 새콤달콤한 식초로 바꿔주는 신기한 세균이에요. 가까이서 냄새를 맡으면 코가 찡할 정도로 새콤한 냄새가 나요!',
     miningSpeed: 2.0,
     capacity: 25,
     avatarSvg: 'acetobacter'
+  },
+  '슈퍼 젖산균': {
+    name: '슈퍼 젖산균',
+    type: '세균 (변종)',
+    tier: 2,
+    glowColor: '#a1c4fd',
+    description: '우유 속을 마치 수영 선수처럼 빠르게 헤엄쳐 다니는 젖산균이에요! 순식간에 우유를 새콤달콤한 요구르트로 만들어버려요.',
+    miningSpeed: 2.0,
+    capacity: 25,
+    avatarSvg: 'lactobacillus'
+  },
+  '구름 이스트': {
+    name: '구름 이스트',
+    type: '균류 (변종)',
+    tier: 2,
+    glowColor: '#c2e9fb',
+    description: '따뜻한 햇빛을 받으면 빵 반죽을 하늘의 뭉게구름처럼 폭신폭신하고 엄청나게 크게 부풀려주는 신기한 이스트예요.',
+    miningSpeed: 2.1,
+    capacity: 24,
+    avatarSvg: 'yeast'
+  },
+  '매콤 젖산균': {
+    name: '매콤 젖산균',
+    type: '세균 (변종)',
+    tier: 2,
+    glowColor: '#ff9a9e',
+    description: '입에서 불이 날 것 같은 매운 고춧가루 속에서도 끄떡없이 살아남는 붉은색 젖산균이에요. 맛있는 김치를 익혀준답니다!',
+    miningSpeed: 1.9,
+    capacity: 28,
+    avatarSvg: 'lactobacillus'
+  },
+  '달콤 이스트': {
+    name: '달콤 이스트',
+    type: '균류 (변종)',
+    tier: 2,
+    glowColor: '#ffc3a0',
+    description: '초콜릿의 재료가 되는 쓴 카카오 열매를 달콤하고 부드럽게 발효시켜 주는 고마운 이스트예요. 달달한 냄새가 나요!',
+    miningSpeed: 1.8,
+    capacity: 32,
+    avatarSvg: 'yeast'
+  },
+  '황금 젖산균': {
+    name: '황금 젖산균',
+    type: '세균 (변종)',
+    tier: 2,
+    glowColor: '#f6d365',
+    description: '우유 단백질을 뭉쳐서 반짝반짝 빛나는 황금빛 치즈로 만들어 주는 젖산균이에요. 이 치즈는 쫄깃쫄깃하고 영양도 만점이랍니다!',
+    miningSpeed: 2.3,
+    capacity: 20,
+    avatarSvg: 'lactobacillus'
+  },
+  '끈적 고초균': {
+    name: '끈적 고초균',
+    type: '세균 (변종)',
+    tier: 2,
+    glowColor: '#d4fc79',
+    description: '청국장을 만들 때 나오는 끈적끈적한 실(아미노산)을 엄청나게 많이 만들어 내는 진화된 고초균이에요. 죽 늘어나는 실이 재미있어요!',
+    miningSpeed: 2.5,
+    capacity: 30,
+    avatarSvg: 'bacillus'
   }
 };
 
@@ -211,13 +231,15 @@ export const combinedMicrobes = {
 export const recipes = {
   '버섯+버섯': '화산 버섯',
   '곰팡이+곰팡이': '네온 곰팡이',
-  '버섯+곰팡이': '포자버섯 젤리',
-  '짚신벌레+짚신벌레': '제트 짚신벌레',
-  '아메바+아메바': '블랙홀 아메바',
-  '아메바+해캄': '우주 태양 아메바', // 해캄(초록 자가영양) + 아메바 = 우주 태양 아메바
   '이스트+이스트': '메가 이스트',
   '곰팡이+이스트': '누룩곰팡이',
-  '대장균+젖산균': '아세트산균'
+  '대장균+젖산균': '아세트산균',
+  '젖산균+짚신벌레': '슈퍼 젖산균',
+  '이스트+해캄': '구름 이스트',
+  '고초균+젖산균': '매콤 젖산균',
+  '아메바+이스트': '달콤 이스트',
+  '버섯+젖산균': '황금 젖산균',
+  '고초균+고초균': '끈적 고초균'
 };
 
 // 조합 함수

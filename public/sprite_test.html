@@ -1,120 +1,206 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <title>미생물 스프라이트 그리드 좌표 확인용</title>
-  <style>
-    body {
-      background-color: #0d0e15;
-      color: #e2e8f0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      text-align: center;
-      margin: 0;
-      padding: 20px;
-    }
-    h1 {
-      color: #38bdf8;
-      margin-bottom: 5px;
-    }
-    p {
-      color: #94a3b8;
-      margin-bottom: 30px;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(5, 150px);
-      gap: 15px;
-      justify-content: center;
-      margin: 0 auto;
-      max-width: 850px;
-    }
-    .cell {
-      border: 1px solid #1e293b;
-      border-radius: 12px;
-      padding: 15px;
-      background-color: #0f172a;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-      transition: all 0.2s;
-    }
-    .cell:hover {
-      border-color: #38bdf8;
-      transform: translateY(-2px);
-    }
-    .sprite {
-      width: 100px;
-      height: 100px;
-      background-image: url('/images/microbes_spritesheet.png');
-      background-size: 500% 500%;
-      image-rendering: pixelated;
-      margin-bottom: 10px;
-      filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.4));
-    }
-    .coord {
-      font-size: 14px;
-      font-weight: bold;
-      color: #f1f5f9;
-    }
-    .hint {
-      font-size: 11px;
-      color: #64748b;
-      margin-top: 3px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>미생물 스프라이트 매칭 테스트</title>
+    <style>
+        body {
+            font-family: 'Malgun Gothic', sans-serif;
+            background-color: #f8f9fa;
+            padding: 20px;
+            color: #343a40;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .sprite-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        .sprite-card:hover {
+            transform: translateY(-5px);
+        }
+        .sprite-img {
+            width: 128px;
+            height: 128px;
+            object-fit: contain;
+            image-rendering: pixelated; /* Keeps pixel art crisp */
+            margin-bottom: 15px;
+            /* Checkerboard background to clearly see transparency */
+            background-color: #333;
+            background-image: 
+                linear-gradient(45deg, #444 25%, transparent 25%, transparent 75%, #444 75%, #444),
+                linear-gradient(45deg, #444 25%, transparent 25%, transparent 75%, #444 75%, #444);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            border-radius: 8px;
+            border: 2px dashed #ced4da;
+        }
+        .sprite-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin: 0;
+            color: #495057;
+        }
+        .sprite-subtitle {
+            font-size: 0.85rem;
+            color: #868e96;
+            margin-top: 5px;
+        }
+        .tier-1 { border-bottom: 4px solid #4dabf7; }
+        .tier-2 { border-bottom: 4px solid #f03e3e; }
+        .bonus { border-bottom: 4px solid #fab005; }
+    </style>
 </head>
 <body>
-  <h1>🧬 미생물 스프라이트 시트 격자 좌표 확인</h1>
-  <p>각 셀의 이미지가 어떤 모양인지 확인하고 원하는 좌표(Row, Col)를 설정할 때 참고하세요.</p>
-  
-  <div class="grid" id="grid"></div>
 
-  <script>
-    const nameMap = {
-      '0,0': '버섯',
-      '0,1': '곰팡이',
-      '0,2': '이스트',
-      '0,3': '누룩곰팡이',
-      '1,0': '짚신벌레',
-      '1,1': '아메바',
-      '1,2': '해캄',
-      '2,0': '대장균',
-      '2,1': '젖산균',
-      '2,2': '고초균',
-      '2,3': '아세트산균',
-      '3,0': '화산 버섯',
-      '3,1': '네온 곰팡이',
-      '3,2': '포자버섯 젤리',
-      '3,3': '제트 짚신벌레',
-      '3,4': '블랙홀 아메바',
-      '4,0': '우주 태양 아메바',
-      '4,1': '메가 이스트'
-    };
+    <h1>미생물 스프라이트 매칭 뷰어</h1>
 
-    const grid = document.getElementById('grid');
-    for (let r = 0; r < 5; r++) {
-      for (let c = 0; c < 5; c++) {
-        const cell = document.createElement('div');
-        cell.className = 'cell';
-        
-        const sprite = document.createElement('div');
-        sprite.className = 'sprite';
-        // 5 columns/rows means 0%, 25%, 50%, 75%, 100% position mapping
-        sprite.style.backgroundPosition = `${c * 25}% ${r * 25}%`;
-        
-        const key = `${r},${c}`;
-        const name = nameMap[key] || '미사용 / 빈 칸';
-        
-        const label = document.createElement('div');
-        label.className = 'coord';
-        label.innerText = name;
-        
-        cell.appendChild(sprite);
-        cell.appendChild(label);
-        grid.appendChild(cell);
-      }
-    }
-  </script>
+    <div class="grid-container">
+        <!-- 1차 미생물 (9종) -->
+        <div class="sprite-card tier-1">
+            <img src="./images/stardew_sprites/sprite_0.webp" alt="버섯" class="sprite-img">
+            <p class="sprite-title">0. 버섯</p>
+            <p class="sprite-subtitle">1차 미생물</p>
+        </div>
+        <div class="sprite-card tier-1">
+            <img src="./images/stardew_sprites/sprite_1.webp" alt="곰팡이" class="sprite-img">
+            <p class="sprite-title">1. 곰팡이</p>
+            <p class="sprite-subtitle">1차 미생물</p>
+        </div>
+        <div class="sprite-card tier-1">
+            <img src="./images/stardew_sprites/sprite_2.webp" alt="짚신벌레" class="sprite-img">
+            <p class="sprite-title">2. 짚신벌레</p>
+            <p class="sprite-subtitle">1차 미생물</p>
+        </div>
+        <div class="sprite-card tier-1">
+            <img src="./images/stardew_sprites/sprite_3.webp" alt="아메바" class="sprite-img">
+            <p class="sprite-title">3. 아메바</p>
+            <p class="sprite-subtitle">1차 미생물</p>
+        </div>
+        <div class="sprite-card tier-1">
+            <img src="./images/stardew_sprites/sprite_4.webp" alt="해캄" class="sprite-img">
+            <p class="sprite-title">4. 해캄</p>
+            <p class="sprite-subtitle">1차 미생물</p>
+        </div>
+        <div class="sprite-card tier-1">
+            <img src="./images/stardew_sprites/sprite_5.webp" alt="대장균" class="sprite-img">
+            <p class="sprite-title">5. 대장균</p>
+            <p class="sprite-subtitle">1차 미생물</p>
+        </div>
+        <div class="sprite-card tier-1">
+            <img src="./images/stardew_sprites/sprite_6.webp" alt="젖산균" class="sprite-img">
+            <p class="sprite-title">6. 젖산균</p>
+            <p class="sprite-subtitle">1차 미생물</p>
+        </div>
+        <div class="sprite-card tier-1">
+            <img src="./images/stardew_sprites/sprite_7.webp" alt="이스트" class="sprite-img">
+            <p class="sprite-title">7. 이스트</p>
+            <p class="sprite-subtitle">1차 미생물</p>
+        </div>
+        <div class="sprite-card tier-1">
+            <img src="./images/stardew_sprites/sprite_8.webp" alt="고초균" class="sprite-img">
+            <p class="sprite-title">8. 고초균</p>
+            <p class="sprite-subtitle">1차 미생물</p>
+        </div>
+
+        <!-- 2차 미생물 (11종) -->
+        <div class="sprite-card tier-2">
+            <img src="./images/stardew_sprites/sprite_9.webp" alt="화산 버섯" class="sprite-img">
+            <p class="sprite-title">9. 화산 버섯</p>
+            <p class="sprite-subtitle">2차 미생물</p>
+        </div>
+        <div class="sprite-card tier-2">
+            <img src="./images/stardew_sprites/sprite_10.webp" alt="네온 곰팡이" class="sprite-img">
+            <p class="sprite-title">10. 네온 곰팡이</p>
+            <p class="sprite-subtitle">2차 미생물</p>
+        </div>
+        <div class="sprite-card tier-2">
+            <img src="./images/stardew_sprites/sprite_11.webp" alt="메가 이스트" class="sprite-img">
+            <p class="sprite-title">11. 메가 이스트</p>
+            <p class="sprite-subtitle">2차 미생물</p>
+        </div>
+        <div class="sprite-card tier-2">
+            <img src="./images/stardew_sprites/sprite_12.webp" alt="누룩곰팡이" class="sprite-img">
+            <p class="sprite-title">12. 누룩곰팡이</p>
+            <p class="sprite-subtitle">2차 미생물</p>
+        </div>
+        <div class="sprite-card tier-2">
+            <img src="./images/stardew_sprites/sprite_13.webp" alt="아세트산균" class="sprite-img">
+            <p class="sprite-title">13. 아세트산균</p>
+            <p class="sprite-subtitle">2차 미생물</p>
+        </div>
+        <div class="sprite-card tier-2">
+            <img src="./images/stardew_sprites/sprite_14.webp" alt="슈퍼 젖산균" class="sprite-img">
+            <p class="sprite-title">14. 슈퍼 젖산균</p>
+            <p class="sprite-subtitle">2차 미생물</p>
+        </div>
+        <div class="sprite-card tier-2">
+            <img src="./images/stardew_sprites/sprite_15.webp" alt="구름 이스트" class="sprite-img">
+            <p class="sprite-title">15. 구름 이스트</p>
+            <p class="sprite-subtitle">2차 미생물</p>
+        </div>
+        <div class="sprite-card tier-2">
+            <img src="./images/stardew_sprites/sprite_16.webp" alt="매콤 젖산균" class="sprite-img">
+            <p class="sprite-title">16. 매콤 젖산균</p>
+            <p class="sprite-subtitle">2차 미생물</p>
+        </div>
+        <div class="sprite-card tier-2">
+            <img src="./images/stardew_sprites/sprite_17.webp" alt="달콤 이스트" class="sprite-img">
+            <p class="sprite-title">17. 달콤 이스트</p>
+            <p class="sprite-subtitle">2차 미생물</p>
+        </div>
+        <div class="sprite-card tier-2">
+            <img src="./images/stardew_sprites/sprite_18.webp" alt="황금 젖산균" class="sprite-img">
+            <p class="sprite-title">18. 황금 젖산균</p>
+            <p class="sprite-subtitle">2차 미생물</p>
+        </div>
+        <div class="sprite-card tier-2">
+            <img src="./images/stardew_sprites/sprite_19.webp" alt="끈적 고초균" class="sprite-img">
+            <p class="sprite-title">19. 끈적 고초균</p>
+            <p class="sprite-subtitle">2차 미생물</p>
+        </div>
+
+        <!-- 보너스 미생물 (5종) -->
+        <div class="sprite-card bonus">
+            <img src="./images/stardew_sprites/sprite_20.webp" alt="보너스1" class="sprite-img">
+            <p class="sprite-title">20. 보너스 1</p>
+            <p class="sprite-subtitle">여분</p>
+        </div>
+        <div class="sprite-card bonus">
+            <img src="./images/stardew_sprites/sprite_21.webp" alt="보너스2" class="sprite-img">
+            <p class="sprite-title">21. 보너스 2</p>
+            <p class="sprite-subtitle">여분</p>
+        </div>
+        <div class="sprite-card bonus">
+            <img src="./images/stardew_sprites/sprite_22.webp" alt="보너스3" class="sprite-img">
+            <p class="sprite-title">22. 보너스 3</p>
+            <p class="sprite-subtitle">여분</p>
+        </div>
+        <div class="sprite-card bonus">
+            <img src="./images/stardew_sprites/sprite_23.webp" alt="보너스4" class="sprite-img">
+            <p class="sprite-title">23. 보너스 4</p>
+            <p class="sprite-subtitle">여분</p>
+        </div>
+        <div class="sprite-card bonus">
+            <img src="./images/stardew_sprites/sprite_24.webp" alt="보너스5" class="sprite-img">
+            <p class="sprite-title">24. 보너스 5</p>
+            <p class="sprite-subtitle">여분</p>
+        </div>
+    </div>
+
 </body>
 </html>
