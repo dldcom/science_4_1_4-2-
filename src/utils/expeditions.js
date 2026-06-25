@@ -7,7 +7,7 @@ export const foodPlanets = [
     y: 3000,
     color: '#fff9c4', // 옅은 노란색
     foodIcon: '🥛',
-    requiredMicrobe: '젖산균',
+    requiredMicrobe: '슈퍼 젖산균',
     duration: 1, // 10초 탐사
     rewardAmount: 15, // 배달 시 얻는 에너지
     storyTitle: '🥛 요구르트 행성 탐사 일지',
@@ -34,7 +34,7 @@ export const foodPlanets = [
     y: 3298,
     color: '#ffcc80', // 구운 빵 색상
     foodIcon: '🍞',
-    requiredMicrobe: '이스트',
+    requiredMicrobe: '구름 이스트',
     duration: 1,
     rewardAmount: 20,
     storyTitle: '🍞 식빵 성운 탐사 일지',
@@ -67,15 +67,15 @@ export const foodPlanets = [
     storyTitle: '💊 푸른곰팡이 행성 탐사 일지',
     storyboard: [
       {
-        image: '/images/spaceship_interior_bg.png',
+        image: '/images/penicillin_pixel_1.png',
         text: '신비한 곰팡이 숲을 탐사하던 대원들이 우연히 곰팡이 잎사귀에서 흘러나온 푸른빛 액체를 맞게 되었어요.'
       },
       {
-        image: '/images/spaceship_interior_bg.png',
+        image: '/images/penicillin_pixel_2.png',
         text: '놀랍게도 이 액체를 묻힌 대원들은 우주의 무서운 \'세균 감염\'으로부터 완전히 안전해졌답니다!'
       },
       {
-        image: '/images/spaceship_interior_bg.png',
+        image: '/images/penicillin_pixel_3.png',
         text: '곰팡이가 나쁜 세균을 꼼짝 못 하게 막아주는 이 고마운 물질을 대원들은 \'페니실린\'이라고 이름 짓고 비상약으로 챙기기 시작했습니다.'
       }
     ],
@@ -88,21 +88,21 @@ export const foodPlanets = [
     y: 3545,
     color: '#ff8a65', // 김치 양념 색상
     foodIcon: '🌶',
-    requiredMicrobe: '젖산균',
+    requiredMicrobe: '매콤 젖산균',
     duration: 1,
     rewardAmount: 25,
     storyTitle: '🌶 김치 위성 탐사 일지',
     storyboard: [
       {
-        image: '/images/spaceship_interior_bg.png',
+        image: '/images/kimchi_pixel_1.png',
         text: '새빨간 위성에 내리자마자 톡 쏘는 매콤새콤한 냄새가 온몸을 감쌌어요.'
       },
       {
-        image: '/images/spaceship_interior_bg.png',
+        image: '/images/kimchi_pixel_2.png',
         text: '행성의 우주 배추에 달라붙은 젖산균들이 배추를 유익하게 숙성시키며 다른 나쁜 세균들을 전부 물리쳐 준 상태였어요.'
       },
       {
-        image: '/images/spaceship_interior_bg.png',
+        image: '/images/kimchi_pixel_3.png',
         text: '한 입 베어 무니 아삭하고 매콤한 즙이 입안 가득 맴돌았습니다. 대원들은 이 매콤하고 새콤하게 익은 채소를 \'김치\'라고 이름 지었고, 느끼한 우주식의 피로를 날려줄 최고의 반찬이 되었어요!'
       }
     ],
@@ -115,21 +115,21 @@ export const foodPlanets = [
     y: 3415,
     color: '#8d6e63', // 초콜릿 갈색
     foodIcon: '🍫',
-    requiredMicrobe: '이스트',
+    requiredMicrobe: '달콤 이스트',
     duration: 1,
     rewardAmount: 18,
     storyTitle: '🍫 초콜릿 행성 탐사 일지',
     storyboard: [
       {
-        image: '/images/spaceship_interior_bg.png',
+        image: '/images/chocolate_pixel_1.webp',
         text: '이곳의 야생 카카오 씨앗은 원래 엄청 쓰고 떫어서 먹을 수가 없었어요.'
       },
       {
-        image: '/images/spaceship_interior_bg.png',
+        image: '/images/chocolate_pixel_2.webp',
         text: '그런데 행성의 이스트(효모)들이 씨앗의 끈적한 단맛을 먹고 보글보글 발효시켜 분해하자, 믿을 수 없을 정도로 향긋하고 달콤쌉싸름한 맛이 우러나오기 시작했어요!'
       },
       {
-        image: '/images/spaceship_interior_bg.png',
+        image: '/images/chocolate_pixel_3.webp',
         text: '대원들은 이 까맣고 신비한 달콤함을 \'초콜릿\'이라고 이름 짓고 기분 전환용 간식으로 가져가기로 했습니다.'
       }
     ],
@@ -142,21 +142,21 @@ export const foodPlanets = [
     y: 3155,
     color: '#ffe082', // 치즈 노란색
     foodIcon: '🧀',
-    requiredMicrobe: '젖산균',
+    requiredMicrobe: '황금 젖산균',
     duration: 1,
     rewardAmount: 22,
     storyTitle: '🧀 치즈 행성 탐사 일지',
     storyboard: [
       {
-        image: '/images/spaceship_interior_bg.png',
+        image: '/images/cheese_pixel_1.webp',
         text: '행성 곳곳에 노란색 커다란 바위들이 흩어져 있는데, 표면에 동글동글한 구멍이 숭숭 뚫려 있어요.'
       },
       {
-        image: '/images/spaceship_interior_bg.png',
+        image: '/images/cheese_pixel_2.webp',
         text: '조사해 보니 젖산균들이 단백질 성분을 뭉쳐서 단단하게 굳혀놓은 것이었습니다.'
       },
       {
-        image: '/images/spaceship_interior_bg.png',
+        image: '/images/cheese_pixel_3.webp',
         text: '냄새는 꼬릿하지만 씹을수록 고소하고 깊은 맛이 우러났어요. 대원들은 구멍 뚫린 고소한 바위 조각을 \'치즈\'라고 이름 지어 본국에 수송하기로 했습니다!'
       }
     ],
@@ -175,15 +175,15 @@ export const foodPlanets = [
     storyTitle: '☕ 커피 위성 탐사 일지',
     storyboard: [
       {
-        image: '/images/spaceship_interior_bg.png',
+        image: '/images/coffee_pixel_1.webp',
         text: '쌉싸름하면서도 깊은 향기가 행성 전체를 포근하게 감싸고 있어요.'
       },
       {
-        image: '/images/spaceship_interior_bg.png',
+        image: '/images/coffee_pixel_2.webp',
         text: '메가 이스트들이 열매 주변의 끈적한 점액질을 깨끗이 먹어 치워 발효하자, 그 속에서 말로 다 표현할 수 없는 화려한 아로마를 풍기는 원두 씨앗이 남겨졌어요.'
       },
       {
-        image: '/images/spaceship_interior_bg.png',
+        image: '/images/coffee_pixel_3.webp',
         text: '이 원두를 볶아 물에 내려 마신 대원들은 머리가 맑아지고 피로가 날아가는 것을 느꼈습니다. 대원들은 이 진한 우주 음료를 \'커피\'라고 부르기로 했습니다!'
       }
     ],
@@ -196,21 +196,21 @@ export const foodPlanets = [
     y: 2585,
     color: '#bcaaa4', // 구수하고 끈적한 갈색 느낌
     foodIcon: '🧫',
-    requiredMicrobe: '고초균',
+    requiredMicrobe: '끈적 고초균',
     duration: 1,
     rewardAmount: 25,
     storyTitle: '🧫 청국장 위성 탐사 일지',
     storyboard: [
       {
-        image: '/images/spaceship_interior_bg.png',
+        image: '/images/cheonggukjang_pixel_1.webp',
         text: '구수한 냄새가 가득한 행성이에요! 우리가 보낸 고초균들이 콩을 발효시키며 신기한 현상을 만들었어요.'
       },
       {
-        image: '/images/spaceship_interior_bg.png',
+        image: '/images/cheonggukjang_pixel_2.webp',
         text: '삶은 콩더미를 들어 올리니 끈적끈적한 영양 실이 거미줄처럼 쭉쭉 늘어났답니다. 먹어보니 굉장히 구수하고 든든했어요!'
       },
       {
-        image: '/images/spaceship_interior_bg.png',
+        image: '/images/cheonggukjang_pixel_3.webp',
         text: '대원들은 이 끈적하고 영양가 높은 콩 요리를 \'청국장\'이라고 부르기로 하고, 뜨끈하게 찌개를 끓여 먹었답니다.'
       }
     ],
@@ -229,15 +229,15 @@ export const foodPlanets = [
     storyTitle: '🍚 된장 성운 탐사 일지',
     storyboard: [
       {
-        image: '/images/spaceship_interior_bg.png',
+        image: '/images/doenjang_pixel_1.webp',
         text: '장독대를 닮은 갈색 성운에 들어서자 깊고 구수한 냄새가 가득 풍겼어요.'
       },
       {
-        image: '/images/spaceship_interior_bg.png',
+        image: '/images/doenjang_pixel_2.webp',
         text: '누룩곰팡이들이 우주 콩 덩어리인 메주의 단백질을 미세하게 분해하자, 짭조름하고 깊은 맛이 나는 진흙 같은 물질과 맑은 간장 물이 생겨났어요.'
       },
       {
-        image: '/images/spaceship_interior_bg.png',
+        image: '/images/doenjang_pixel_3.webp',
         text: '대원들은 이 짭조름하고 구수한 요리 재료들을 \'된장\'과 \'간장\'이라고 이름 지어 대원들의 밥상을 맛있게 해줄 양념으로 삼았습니다.'
       }
     ],
@@ -256,15 +256,15 @@ export const foodPlanets = [
     storyTitle: '🏺 식초 바다 행성 탐사 일지',
     storyboard: [
       {
-        image: '/images/spaceship_interior_bg.png',
+        image: '/images/vinegar_pixel_1.webp',
         text: '이 행성은 톡 쏘며 상큼한 사과 향이 가득한 투명한 바다로 둘러싸여 있어요.'
       },
       {
-        image: '/images/spaceship_interior_bg.png',
+        image: '/images/vinegar_pixel_2.webp',
         text: '아세트산균들이 단 술 강물을 시큼한 성분으로 바꾸어서 톡 쏘는 새콤한 액체로 가득 채워둔 것이었습니다.'
       },
       {
-        image: '/images/spaceship_interior_bg.png',
+        image: '/images/vinegar_pixel_3.webp',
         text: '맛을 보니 새콤해서 몸의 피로가 싹 풀렸어요. 대원들은 이 신비한 신맛 액체를 \'식초\'라고 부르며, 요리와 청소 소독에 유용하게 쓰기 시작했습니다!'
       }
     ],
@@ -283,15 +283,15 @@ export const foodPlanets = [
     storyTitle: '🍲 버섯 수프 행성 탐사 일지',
     storyboard: [
       {
-        image: '/images/spaceship_interior_bg.png',
+        image: '/images/mushroomsoup_pixel_1.webp',
         text: '행성의 계곡마다 부드럽고 노란 크림 호수가 넘실대고 있어요.'
       },
       {
-        image: '/images/spaceship_interior_bg.png',
+        image: '/images/mushroomsoup_pixel_2.webp',
         text: '화산 버섯이 주변의 우주 유기 먼지들을 말끔하게 분해하여 따뜻하고 고소하게 우려낸 덕분이었습니다.'
       },
       {
-        image: '/images/spaceship_interior_bg.png',
+        image: '/images/mushroomsoup_pixel_3.webp',
         text: '대원들이 추위에 떨다 이 호숫물을 떠먹어 보니 몸이 사르르 녹아내렸답니다. 대원들은 이 뜨끈하고 고소한 호수를 \'버섯 수프\'라고 이름 지어 피로 회복식으로 공급하기 시작했습니다!'
       }
     ],

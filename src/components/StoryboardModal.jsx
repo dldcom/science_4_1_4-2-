@@ -12,7 +12,7 @@ export default function StoryboardModal({ planet, onClose }) {
     slides = planet.storyboard;
   } else {
     // Fallback in case storyboard is missing
-    slides = [{ image: '/images/spaceship_interior_bg.png', text: planet.storyContent }];
+    slides = [{ image: '/images/spaceship_interior.png', text: planet.storyContent }];
   }
 
   const slide = slides[currentSlide];

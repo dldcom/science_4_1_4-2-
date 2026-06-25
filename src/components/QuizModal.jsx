@@ -15,13 +15,14 @@ const baseMicrobes = [
   { name: '대장균', category: '세균' },
 ];
 
-export default function QuizModal({ isOpen, onClose, onQuizSuccess }) {
+export default function QuizModal({ isOpen, onClose, onQuizSuccess, onSpendResearchCost }) {
   const [selectedTarget, setSelectedTarget] = useState(null);
   const [currentQuiz, setCurrentQuiz] = useState(null);
   const [selectedOption, setSelectedOption] = useState(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [isSummoning, setIsSummoning] = useState(false);
+  const [costError, setCostError] = useState('');
   const microscopeRef = useRef(null);
   const [summonCoords, setSummonCoords] = useState({ startX: 0, startY: 0, diffX: 0, diffY: 0 });
 
@@ -33,6 +34,7 @@ export default function QuizModal({ isOpen, onClose, onQuizSuccess }) {
       setIsSubmitted(false);
       setIsCorrect(false);
       setIsSummoning(false);
+      setCostError('');
     }
   }, [isOpen]);
 
@@ -43,14 +45,32 @@ export default function QuizModal({ isOpen, onClose, onQuizSuccess }) {
     const targetQuizzes = quizzes.filter(q => q.targetMicrobe === targetName);
     const randomQuiz = targetQuizzes[Math.floor(Math.random() * targetQuizzes.length)];
     setCurrentQuiz(randomQuiz);
+    setCostError('');
   };
 
   const handleSubmit = (optionIdx) => {
     if (isSubmitted) return;
+    const paid = onSpendResearchCost ? onSpendResearchCost() : true;
+    if (!paid) {
+      setCostError('바이오 에너지가 부족합니다. 연구에는 100 Bio가 필요합니다.');
+      return;
+    }
+    setCostError('');
     setSelectedOption(optionIdx);
     setIsSubmitted(true);
     const correct = optionIdx === currentQuiz.answerIndex;
     setIsCorrect(correct);
+  };
+
+  const handleBack = () => {
+    if (selectedTarget && !isSubmitted) {
+      setSelectedTarget(null);
+      setCurrentQuiz(null);
+      setSelectedOption(null);
+      setCostError('');
+      return;
+    }
+    onClose();
   };
 
   const handleCollect = () => {
@@ -117,8 +137,15 @@ export default function QuizModal({ isOpen, onClose, onQuizSuccess }) {
           ✕
         </button>
 
+        <button
+          onClick={handleBack}
+          className="absolute top-4 left-4 px-4 h-12 flex items-center justify-center pixel-btn-gray text-[#343a40] cursor-pointer font-bold leading-none text-sm shadow-md z-10"
+        >
+          뒤로가기
+        </button>
+
         {/* 타이틀 */}
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center gap-4 mb-6 pl-28">
           <span className="px-4 py-2 bg-[#adb5bd] text-white border-4 border-[#868e96] rounded-md text-sm font-bold uppercase tracking-wider font-pixel">
             연구 센터
           </span>
@@ -178,6 +205,12 @@ export default function QuizModal({ isOpen, onClose, onQuizSuccess }) {
               <p className="text-xl leading-relaxed mb-6 font-bold text-[#212529] bg-[#f8f9fa] p-6 rounded-xl border-4 border-[#dee2e6]">
                 Q. {currentQuiz.question}
               </p>
+
+              {costError && (
+                <div className="mb-4 p-3 bg-[#fff3cd] border-4 border-[#ffec99] rounded-xl text-center text-[#9b2226] font-bold">
+                  {costError}
+                </div>
+              )}
 
               {!isSubmitted ? (
                 <div className="grid grid-cols-1 gap-3 mb-6">

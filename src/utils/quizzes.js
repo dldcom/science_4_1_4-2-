@@ -9,7 +9,7 @@ export const quizzes = [
     options: ["길쭉한 둥근 모양", "가늘고 긴 모양", "공 모양", "별 모양"],
     answerIndex: 0,
     hintText: "신발(짚신)처럼 길쭉하고 둥근 형태를 띠고 있어요.",
-    explanation: "교과서 97쪽에 따르면 짚신벌레는 길쭉한 둥근 모양을 하고 있습니다."
+    explanation: "짚신벌레는 길쭉한 둥근 모양을 하고 있습니다."
   },
   {
     id: 'q2',
@@ -29,7 +29,7 @@ export const quizzes = [
     options: ["머리카락 모양", "짚신 모양", "공 모양", "막대 모양"],
     answerIndex: 0,
     hintText: "가늘고 긴 실처럼 생겼습니다.",
-    explanation: "교과서 97쪽에 따르면 해캄은 가늘고 긴 머리카락 모양입니다."
+    explanation: "해캄은 가늘고 긴 머리카락 모양입니다."
   },
   {
     id: 'q4',
@@ -71,7 +71,7 @@ export const quizzes = [
     options: ["균사", "줄기", "섬모", "뿌리"],
     answerIndex: 0,
     hintText: "균류의 몸을 이루는 실 같은 구조입니다.",
-    explanation: "교과서 93쪽: 버섯과 곰팡이는 실처럼 가늘고 긴 '균사'로 이루어져 있습니다."
+    explanation: "버섯과 곰팡이는 실처럼 가늘고 긴 '균사'로 이루어져 있습니다."
   },
   {
     id: 'q8',
@@ -101,7 +101,7 @@ export const quizzes = [
     options: ["따뜻하고 축축한 곳", "건조한 사막", "냉장고 속", "햇빛이 강한 곳"],
     answerIndex: 0,
     hintText: "여름철 장마 때 곰팡이가 잘 피는 이유를 생각해보세요.",
-    explanation: "교과서 93쪽: 균류는 따뜻하고 습한(축축한) 곳에서 잘 자랍니다."
+    explanation: "균류는 따뜻하고 습한(축축한) 곳에서 잘 자랍니다."
   },
   {
     id: 'q11',
@@ -133,7 +133,7 @@ export const quizzes = [
     options: ["훨씬 작다", "훨씬 크다", "비슷하다", "관찰하기 쉽다"],
     answerIndex: 0,
     hintText: "아주 성능이 좋은 현미경으로 보아야만 보입니다.",
-    explanation: "교과서 98쪽: 세균은 균류나 원생생물보다 크기가 작아 맨눈으로 관찰하기 어렵습니다."
+    explanation: "세균은 균류나 원생생물보다 크기가 작아 맨눈으로 관찰하기 어렵습니다."
   },
   {
     id: 'q14',
@@ -153,7 +153,7 @@ export const quizzes = [
     options: ["막대 모양", "별 모양", "짚신 모양", "네모 모양"],
     answerIndex: 0,
     hintText: "아이스크림 스틱 같은 모양입니다.",
-    explanation: "교과서 99쪽: 세균은 공 모양, 막대 모양, 나선 모양 등이 있습니다. 고초균과 대장균은 막대 모양입니다."
+    explanation: "세균은 공 모양, 막대 모양, 나선 모양 등이 있습니다. 고초균과 대장균은 막대 모양입니다."
   },
   {
     id: 'q16',

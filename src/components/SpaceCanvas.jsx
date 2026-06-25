@@ -1,25 +1,36 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { foodPlanets } from '../utils/expeditions';
 
+const SPRITE_COLUMNS = 5;
+const SPRITE_ROWS = 4;
+const PLANET_SPRITE_COLUMNS = 4;
+const PLANET_SPRITE_ROWS = 3;
+const SUPPLY_ICON_COLUMNS = 4;
+const SUPPLY_ICON_SIZE = 32;
+const DAFFODIL_CANAL_COLOR = '#f7d65a';
+const DAFFODIL_CANAL_GLOW = 'rgba(247, 214, 90, 0.52)';
+
 const spriteMapping = {
   '버섯': { row: 0, col: 0 },
   '곰팡이': { row: 0, col: 1 },
-  '이스트': { row: 0, col: 2 },
-  '누룩곰팡이': { row: 0, col: 3 },
-  '짚신벌레': { row: 1, col: 0 },
-  '아메바': { row: 1, col: 1 },
-  '해캄': { row: 1, col: 2 },
-  '대장균': { row: 2, col: 0 },
-  '젖산균': { row: 2, col: 1 },
-  '고초균': { row: 2, col: 2 },
+  '짚신벌레': { row: 0, col: 2 },
+  '아메바': { row: 0, col: 3 },
+  '해캄': { row: 0, col: 4 },
+  '대장균': { row: 1, col: 0 },
+  '젖산균': { row: 1, col: 1 },
+  '이스트': { row: 1, col: 2 },
+  '고초균': { row: 1, col: 3 },
+  '화산 버섯': { row: 1, col: 4 },
+  '네온 곰팡이': { row: 2, col: 0 },
+  '메가 이스트': { row: 2, col: 1 },
+  '누룩곰팡이': { row: 2, col: 2 },
   '아세트산균': { row: 2, col: 3 },
-  '화산 버섯': { row: 3, col: 0 },
-  '네온 곰팡이': { row: 3, col: 1 },
-  '포자버섯 젤리': { row: 3, col: 2 },
-  '제트 짚신벌레': { row: 3, col: 3 },
-  '블랙홀 아메바': { row: 3, col: 4 },
-  '우주 태양 아메바': { row: 4, col: 0 },
-  '메가 이스트': { row: 4, col: 1 }
+  '슈퍼 젖산균': { row: 2, col: 4 },
+  '구름 이스트': { row: 3, col: 0 },
+  '매콤 젖산균': { row: 3, col: 1 },
+  '달콤 이스트': { row: 3, col: 2 },
+  '황금 젖산균': { row: 3, col: 3 },
+  '끈적 고초균': { row: 3, col: 4 }
 };
 
 // 미생물 모양을 그리거나 이미지 스프라이트를 렌더링하는 함수
@@ -83,8 +94,8 @@ const drawMicrobe = (ctx, type, name, x, y, size, angle, state, glowColor, time,
     
     const col = sprite.col;
     const row = sprite.row;
-    const cellW = spritesheetImg.width / 5;
-    const cellH = spritesheetImg.height / 5;
+    const cellW = spritesheetImg.width / SPRITE_COLUMNS;
+    const cellH = spritesheetImg.height / SPRITE_ROWS;
     const sx = col * cellW;
     const sy = row * cellH;
 
@@ -356,6 +367,48 @@ const drawMicrobe = (ctx, type, name, x, y, size, angle, state, glowColor, time,
   ctx.restore();
 };
 
+const drawPlanetSprite = (ctx, sheet, planetIdx, x, y, size, locked) => {
+  if (!sheet) return false;
+
+  const cellW = sheet.width / PLANET_SPRITE_COLUMNS;
+  const cellH = sheet.height / PLANET_SPRITE_ROWS;
+  const col = planetIdx % PLANET_SPRITE_COLUMNS;
+  const row = Math.floor(planetIdx / PLANET_SPRITE_COLUMNS);
+
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.shadowBlur = 0;
+  ctx.shadowColor = 'transparent';
+  ctx.filter = 'none';
+  if (locked) {
+    ctx.globalAlpha = 0.55;
+  }
+  ctx.drawImage(
+    sheet,
+    col * cellW, row * cellH, cellW, cellH,
+    x - size / 2, y - size / 2, size, size
+  );
+  ctx.restore();
+  return true;
+};
+
+const drawSupplyIconSprite = (ctx, sheet, planetIdx, x, y, size) => {
+  if (!sheet || planetIdx < 0) return false;
+
+  const col = planetIdx % SUPPLY_ICON_COLUMNS;
+  const row = Math.floor(planetIdx / SUPPLY_ICON_COLUMNS);
+
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(
+    sheet,
+    col * SUPPLY_ICON_SIZE, row * SUPPLY_ICON_SIZE, SUPPLY_ICON_SIZE, SUPPLY_ICON_SIZE,
+    x - size / 2, y - size / 2, size, size
+  );
+  ctx.restore();
+  return true;
+};
+
 export default function SpaceCanvas({
   microbes,
   setMicrobes,
@@ -372,6 +425,10 @@ export default function SpaceCanvas({
   const spritesheetImgRef = useRef(null);
   const nutrientsRef = useRef([]); // 배양액 내부 유기 영양분
   const starsRef = useRef([]);
+  const focusedMicrobeRef = useRef(focusedMicrobe);
+  const onPlanetClickRef = useRef(onPlanetClick);
+  const addBioEnergyRef = useRef(addBioEnergy);
+  const expeditionsRef = useRef(expeditions);
 
   // 타일 텍스처 이미지 Refs
   const brightSpaceTileImgRef = useRef(null);
@@ -403,7 +460,7 @@ export default function SpaceCanvas({
   // 2. 미생물 스프라이트 시트 이미지 로딩
   useEffect(() => {
     const sheetImg = new Image();
-    sheetImg.src = '/images/microbes_spritesheet.png';
+    sheetImg.src = '/images/microbes_spritesheet_full.png';
     sheetImg.onload = () => {
       spritesheetImgRef.current = sheetImg;
     };
@@ -484,6 +541,22 @@ export default function SpaceCanvas({
   const particlesRef = useRef([]);
   const textPopupsRef = useRef([]);
   const microbesRef = useRef(microbes);
+
+  useEffect(() => {
+    focusedMicrobeRef.current = focusedMicrobe;
+  }, [focusedMicrobe]);
+
+  useEffect(() => {
+    onPlanetClickRef.current = onPlanetClick;
+  }, [onPlanetClick]);
+
+  useEffect(() => {
+    addBioEnergyRef.current = addBioEnergy;
+  }, [addBioEnergy]);
+
+  useEffect(() => {
+    expeditionsRef.current = expeditions;
+  }, [expeditions]);
 
   const spawnParticle = (props) => {
     const pool = particlesRef.current;
@@ -599,15 +672,65 @@ export default function SpaceCanvas({
         const minY = 3000 - tankHeight / 2;
         const maxY = 3000 + tankHeight / 2;
 
-        if (state === 'mining') {
+        if (state === 'merging') {
+          const targetX = m.mergeTargetX ?? x;
+          const targetY = m.mergeTargetY ?? y;
+          const dx = targetX - x;
+          const dy = targetY - y;
+          const dist = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+          x += dx * 0.18;
+          y += dy * 0.18;
+          vx = 0;
+          vy = 0;
+          angle = Math.atan2(dy, dx);
+
+          if (timeRef.current % 4 === 0) {
+            spawnParticle({
+              x,
+              y,
+              vx: (Math.random() - 0.5) * 1.6,
+              vy: (Math.random() - 0.5) * 1.6,
+              color: m.glowColor || '#ffca28',
+              size: 2 + Math.floor(Math.random() * 2),
+              life: 18,
+              isPixelStar: true
+            });
+          }
+
+          if (dist < 4) {
+            x = targetX;
+            y = targetY;
+          }
+        } else if (state === 'mining') {
           // 물속을 둥둥 떠다니는 부유 시뮬레이션
           let curAngle = (angle === undefined || isNaN(angle)) ? Math.random() * Math.PI * 2 : angle;
-          curAngle += (Math.random() - 0.5) * 0.05;
+          if (m.floatPhase === undefined) m.floatPhase = Math.random() * Math.PI * 2;
+          if (m.wanderTurn === undefined) m.wanderTurn = (Math.random() - 0.5) * 0.018;
+
+          curAngle += Math.sin(timeRef.current * 0.012 + m.floatPhase) * 0.012 + m.wanderTurn;
+          if (Math.random() < 0.006) {
+            m.wanderTurn = (Math.random() - 0.5) * 0.018;
+          }
           angle = curAngle;
 
-          const floatSpeed = 0.01 * speed; // 초저속 유영
-          vx += Math.cos(curAngle) * floatSpeed * 0.1;
-          vy += Math.sin(curAngle) * floatSpeed * 0.1;
+          const floatForce = 0.018 * speed;
+          vx += Math.cos(curAngle) * floatForce;
+          vy += Math.sin(curAngle) * floatForce;
+
+          const centerDx = x - collector.x;
+          const centerDy = y - collector.y;
+          const centerDist = Math.max(1, Math.sqrt(centerDx * centerDx + centerDy * centerDy));
+          if (centerDist < 180) {
+            const repel = (180 - centerDist) / 180 * 0.035;
+            vx += (centerDx / centerDist) * repel;
+            vy += (centerDy / centerDist) * repel;
+          }
+
+          const edgePadding = 90;
+          if (x < minX + edgePadding) vx += 0.025;
+          if (x > maxX - edgePadding) vx -= 0.025;
+          if (y < minY + edgePadding) vy += 0.025;
+          if (y > maxY - edgePadding) vy -= 0.025;
 
           // 부유 유영 중에 주변 영양분에 가까이 닿았는지(16px 이하) 검증
           let touchedNutrient = null;
@@ -641,7 +764,7 @@ export default function SpaceCanvas({
           }
 
           // 자연 채굴량 축적
-          energyCurrent += m.miningSpeed * 0.04;
+          energyCurrent += m.miningSpeed * 0.012;
           if (energyCurrent >= energyCapacity) {
             energyCurrent = energyCapacity;
             state = 'returning';
@@ -654,7 +777,7 @@ export default function SpaceCanvas({
 
           if (dist < collector.radius + 10) {
             const harvestAmount = Math.round(energyCapacity);
-            addBioEnergy(harvestAmount);
+            addBioEnergyRef.current(harvestAmount);
             spawnTextPopup({
               x: x, y: y - 12, text: `+${harvestAmount}`, color: m.glowColor, alpha: 1.0, life: 40
             });
@@ -668,6 +791,10 @@ export default function SpaceCanvas({
             }
             energyCurrent = 0;
             state = 'mining';
+            const scatterAngle = Math.atan2(y - collector.y, x - collector.x) + (Math.random() - 0.5) * 0.9;
+            vx = Math.cos(scatterAngle) * (1.2 + Math.random() * 0.8);
+            vy = Math.sin(scatterAngle) * (1.2 + Math.random() * 0.8);
+            angle = scatterAngle;
           } else {
             // 포탈 방향으로 가속 (하지만 이미 충분히 빠른 관성이 있으면 더하지 않음)
             const returnVx = (dx / dist) * 0.8 * speed;
@@ -680,8 +807,13 @@ export default function SpaceCanvas({
         } else if (state === 'expedition') {
           const targetPlanet = foodPlanets.find(p => p.id === targetPlanetId);
           if (targetPlanet) {
+            const expeditionStatus = expeditionsRef.current?.[targetPlanetId]?.status;
+            const hasReachedPlanet = expeditionStatus && expeditionStatus !== 'exploring';
+            if (!hasReachedPlanet && !expStartFramesRef.current[targetPlanetId]) {
+              expStartFramesRef.current[targetPlanetId] = timeRef.current;
+            }
             const startFrame = expStartFramesRef.current[targetPlanetId] || timeRef.current;
-            const elapsed = timeRef.current - startFrame;
+            const elapsed = hasReachedPlanet ? 360 : timeRef.current - startFrame;
             
             // 배양조 끝부분 위치 계산
             const angleToPlanet = Math.atan2(targetPlanet.y - 3000, targetPlanet.x - 4000);
@@ -708,8 +840,9 @@ export default function SpaceCanvas({
                 // 곡선 수로 제어점 계산
                 const dx = targetPlanet.x - edgeX;
                 const dy = targetPlanet.y - edgeY;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                const bendDir = (targetPlanet.id % 2 === 0) ? 1 : -1;
+                const dist = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+                const targetPlanetIdx = foodPlanets.findIndex(p => p.id === targetPlanet.id);
+                const bendDir = (targetPlanetIdx % 2 === 0) ? 1 : -1;
                 const cp1x = edgeX + dx * 0.33 - (dy / dist) * 150 * bendDir;
                 const cp1y = edgeY + dy * 0.33 + (dx / dist) * 150 * bendDir;
                 const cp2x = edgeX + dx * 0.66 + (dy / dist) * 150 * bendDir;
@@ -729,7 +862,7 @@ export default function SpaceCanvas({
                 // 도착 후 궤도 회전
                 const dx = targetPlanet.x - x;
                 const dy = targetPlanet.y - y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
+                const dist = Math.max(1, Math.sqrt(dx * dx + dy * dy));
                 const orbitRadius = 45;
                 const radialForce = (dist - orbitRadius) * 0.05;
                 const tangentX = -dy / dist;
@@ -753,6 +886,15 @@ export default function SpaceCanvas({
         } else {
           vx *= 0.985;
           vy *= 0.985;
+        }
+
+        if (state === 'mining') {
+          const maxFloatSpeed = 1.45;
+          const currentSpeed = Math.sqrt(vx * vx + vy * vy);
+          if (currentSpeed > maxFloatSpeed) {
+            vx = (vx / currentSpeed) * maxFloatSpeed;
+            vy = (vy / currentSpeed) * maxFloatSpeed;
+          }
         }
 
         x += vx;
@@ -793,6 +935,7 @@ export default function SpaceCanvas({
         for (let j = i + 1; j < microbesList.length; j++) {
           let m1 = microbesList[i];
           let m2 = microbesList[j];
+          if (m1.state === 'merging' || m2.state === 'merging') continue;
           
           const dx = m1.x - m2.x;
           const dy = m1.y - m2.y;
@@ -838,8 +981,7 @@ export default function SpaceCanvas({
         }
       }
 
-      // 리액트 상태 동기화를 위해 새로운 배열 참조 생성
-      microbesRef.current = microbesList.map(m => ({...m}));
+      microbesRef.current = microbesList;
     };
 
     // 5. 프레임 렌더링 루프
@@ -1002,8 +1144,8 @@ export default function SpaceCanvas({
       ctx.clip('evenodd');
 
       foodPlanets.forEach((planet, planetIdx) => {
-        const exp = expeditions && expeditions[planet.id];
-        if (exp && (exp.status === 'exploring' || exp.status === 'supplying')) {
+        const exp = expeditionsRef.current && expeditionsRef.current[planet.id];
+        if (exp && (exp.status === 'exploring' || exp.status === 'complete' || exp.status === 'supplying')) {
           
           if (exp.status === 'exploring') {
             if (!expStartFramesRef.current[planet.id]) {
@@ -1034,7 +1176,7 @@ export default function SpaceCanvas({
             const dx = planet.x - edgeX;
             const dy = planet.y - edgeY;
             const dist = Math.sqrt(dx * dx + dy * dy);
-            const bendDir = (planet.id % 2 === 0) ? 1 : -1;
+            const bendDir = (planetIdx % 2 === 0) ? 1 : -1;
             const cp1x = edgeX + dx * 0.33 - (dy / dist) * 150 * bendDir;
             const cp1y = edgeY + dy * 0.33 + (dx / dist) * 150 * bendDir;
             const cp2x = edgeX + dx * 0.66 + (dy / dist) * 150 * bendDir;
@@ -1079,7 +1221,9 @@ export default function SpaceCanvas({
             ctx.lineWidth = 20;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
-            if (pondWaterTileImgRef.current) {
+            if (exp.status === 'exploring' || exp.status === 'complete') {
+              ctx.strokeStyle = DAFFODIL_CANAL_COLOR;
+            } else if (pondWaterTileImgRef.current) {
               if (!pondWaterPatternRef.current) {
                 pondWaterPatternRef.current = ctx.createPattern(pondWaterTileImgRef.current, 'repeat');
               }
@@ -1093,12 +1237,12 @@ export default function SpaceCanvas({
             drawCanalPath(ctx);
             ctx.lineWidth = 24;
             ctx.lineJoin = 'round';
-            if (exp.status === 'exploring') {
-              ctx.strokeStyle = 'rgba(0, 229, 255, 0.4)';
+            if (exp.status === 'exploring' || exp.status === 'complete') {
+              ctx.strokeStyle = DAFFODIL_CANAL_GLOW;
               ctx.setLineDash([15, 10]);
               ctx.lineDashOffset = -time * 1.5;
               ctx.shadowBlur = 15;
-              ctx.shadowColor = '#00e5ff';
+              ctx.shadowColor = DAFFODIL_CANAL_COLOR;
             } else { // supplying
               ctx.strokeStyle = 'rgba(76, 175, 80, 0.4)';
               ctx.shadowBlur = 15;
@@ -1114,7 +1258,7 @@ export default function SpaceCanvas({
               
               // 배양조 가장자리에 도착한 순간(주기 완료) 자원 획득 처리
               if (offsetTime % 300 === 0 && time > 0) {
-                addBioEnergy(planet.rewardAmount);
+                addBioEnergyRef.current(planet.rewardAmount);
                 spawnTextPopup({
                   x: edgeX,
                   y: edgeY - 20,
@@ -1152,7 +1296,17 @@ export default function SpaceCanvas({
                 ctx.globalAlpha = dropProgress / 0.1;
               }
               
-              ctx.fillText(planet.foodIcon || '📦', dropX, dropY);
+              const iconDrawn = drawSupplyIconSprite(
+                ctx,
+                iconsSpritesheetRef.current,
+                planetIdx,
+                dropX,
+                dropY,
+                26
+              );
+              if (!iconDrawn) {
+                ctx.fillText(planet.foodIcon || '📦', dropX, dropY);
+              }
               ctx.restore();
             }
             ctx.restore();
@@ -1231,7 +1385,7 @@ export default function SpaceCanvas({
 
       // 5.4. 개척 식품 행성들 렌더링
       foodPlanets.forEach((planet, planetIdx) => {
-        const exp = expeditions && expeditions[planet.id];
+        const exp = expeditionsRef.current && expeditionsRef.current[planet.id];
         const status = exp ? exp.status : 'locked';
 
         const hasRequiredMicrobe = microbesRef.current.some(m => m.name === planet.requiredMicrobe && m.state !== 'expedition');
@@ -1239,19 +1393,30 @@ export default function SpaceCanvas({
         const isTrulyLocked = status === 'locked' && !hasRequiredMicrobe;
 
         ctx.save();
-        ctx.shadowBlur = 15 + Math.sin(time * 0.04) * 5;
-        ctx.shadowColor = planet.color;
+        ctx.shadowBlur = 0;
 
         const planetColor = isTrulyLocked ? '#b0bec5' : planet.color;
 
         // 행성 원체
-        ctx.fillStyle = planetColor;
-        ctx.strokeStyle = '#37474f';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(planet.x, planet.y, 32, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.fill();
+        const planetSpriteDrawn = drawPlanetSprite(
+          ctx,
+          planetsSpritesheetRef.current,
+          planetIdx,
+          planet.x,
+          planet.y,
+          72,
+          isTrulyLocked
+        );
+
+        if (!planetSpriteDrawn) {
+          ctx.fillStyle = planetColor;
+          ctx.strokeStyle = '#37474f';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(planet.x, planet.y, 32, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.fill();
+        }
 
         // 외곽 분위 효과
         ctx.strokeStyle = planetColor + '33';
@@ -1273,12 +1438,14 @@ export default function SpaceCanvas({
           ctx.restore();
         }
 
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '22px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(isTrulyLocked ? '❓' : planet.foodIcon, planet.x, planet.y);
+        if (!planetSpriteDrawn) {
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = '#ffffff';
+          ctx.font = '22px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(isTrulyLocked ? '❓' : planet.foodIcon, planet.x, planet.y);
+        }
 
         ctx.fillStyle = isTrulyLocked ? '#78909c' : '#37474f';
         ctx.font = 'bold 12px DungGeunMo, Courier New';
@@ -1348,15 +1515,7 @@ export default function SpaceCanvas({
 
           const iSheet = iconsSpritesheetRef.current;
           if (iSheet && p.planetIdx !== undefined) {
-            ctx.save();
-            const col = p.planetIdx % 4;
-            const row = Math.floor(p.planetIdx / 4);
-            ctx.drawImage(
-              iSheet,
-              col * 32, row * 32, 32, 32,
-              px - 12, py - 12, 24, 24
-            );
-            ctx.restore();
+            drawSupplyIconSprite(ctx, iSheet, p.planetIdx, px, py, 24);
           } else {
             ctx.save();
             ctx.font = '16px sans-serif';
@@ -1372,7 +1531,7 @@ export default function SpaceCanvas({
 
           if (p.progress >= 1.0) {
             // 포탈 도착 시 자원 추가 및 팝업
-            addBioEnergy(p.rewardAmount);
+            addBioEnergyRef.current(p.rewardAmount);
             
             spawnTextPopup({
               x: collector.x,
@@ -1448,7 +1607,11 @@ export default function SpaceCanvas({
 
       // 5.8. 미생물 무리 렌더링
       microbesRef.current.forEach(m => {
-        const isFocused = focusedMicrobe && focusedMicrobe.id === m.id;
+        const currentFocusedMicrobe = focusedMicrobeRef.current;
+        const isFocused = currentFocusedMicrobe && currentFocusedMicrobe.id === m.id;
+        const renderSize = m.state === 'merging'
+          ? (m.size || 18) * (0.9 + Math.sin(time * 0.28) * 0.12)
+          : (m.size || 18);
         
         // 미생물 아이콘 및 모양 그리기
         drawMicrobe(
@@ -1457,7 +1620,7 @@ export default function SpaceCanvas({
           m.name, 
           m.x, 
           m.y, 
-          m.size || 18, 
+          renderSize, 
           m.angle, 
           m.state, 
           m.glowColor, 
@@ -1469,6 +1632,17 @@ export default function SpaceCanvas({
         // 채굴 중 게이지 링 그리기 삭제됨 (사용자 요청)
 
         // 납품 귀환 시 하이라이트 링
+        if (m.state === 'merging') {
+          ctx.save();
+          ctx.strokeStyle = m.glowColor || '#ffca28';
+          ctx.globalAlpha = 0.35 + Math.sin(time * 0.2) * 0.18;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(m.x, m.y, 28 + Math.sin(time * 0.18) * 5, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        }
+
         if (m.state === 'returning') {
           ctx.save();
           ctx.strokeStyle = '#ffffff88';
@@ -1504,8 +1678,8 @@ export default function SpaceCanvas({
       });
 
       // 5.10. 돋보기 관찰 포커스 가이드라인 그리기
-      if (focusedMicrobe) {
-        const fm = microbesRef.current.find(m => m.id === focusedMicrobe.id);
+      if (focusedMicrobeRef.current) {
+        const fm = microbesRef.current.find(m => m.id === focusedMicrobeRef.current.id);
         if (fm) {
           ctx.save();
           ctx.strokeStyle = '#ffffff66';
@@ -1535,7 +1709,7 @@ export default function SpaceCanvas({
       ctx.restore();
 
       // 화면 상태 갱신을 1초(60프레임) 단위로 줄여서 리액트 리렌더링 렉 최소화
-      if (focusedMicrobe && time % 60 === 0) {
+      if (focusedMicrobeRef.current && time % 60 === 0) {
         setMicrobes([...microbesRef.current]);
       }
 
@@ -1549,7 +1723,7 @@ export default function SpaceCanvas({
     return () => {
       cancelAnimationFrame(animationFrameId);
     };
-  }, [sectors, focusedMicrobe, onPlanetClick]);
+  }, [sectors, setMicrobes]);
 
   // 마우스 및 터치 드래그 스크롤 핸들링
   const handleTouchStart = (e) => {
@@ -1570,7 +1744,6 @@ export default function SpaceCanvas({
     const clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0].clientY);
 
     const rect = canvas.getBoundingClientRect();
-    // 클릭 시작(dragDist)을 알기 위한 dragStartRef 기록
     dragStartRef.current = {
       x: clientX,
       y: clientY,
@@ -1580,34 +1753,6 @@ export default function SpaceCanvas({
       rectTop: rect.top
     };
 
-    // 캔버스 좌표계 변환
-    const clickX = clientX - rect.left;
-    const clickY = clientY - rect.top;
-    const worldClickX = clickX + cameraRef.current.x;
-    const worldClickY = clickY + cameraRef.current.y;
-
-    // 미생물 클릭 체크 (드래그 타겟 찾기)
-    let clickedMicrobe = null;
-    for (let i = microbesRef.current.length - 1; i >= 0; i--) {
-      const m = microbesRef.current[i];
-      const dist = Math.sqrt(Math.pow(worldClickX - m.x, 2) + Math.pow(worldClickY - m.y, 2));
-      if (dist < 35) { // 넉넉한 클릭 반경
-        clickedMicrobe = m;
-        break;
-      }
-    }
-
-    if (clickedMicrobe) {
-      draggedMicrobeRef.current = {
-        id: clickedMicrobe.id,
-        history: [{ x: worldClickX, y: worldClickY, time: performance.now() }]
-      };
-      isDraggingRef.current = false; // 카메라 드래그 방지
-      if (canvas) canvas.style.cursor = 'grabbing';
-      return;
-    }
-
-    // 빈 공간 클릭이면 카메라 드래그
     isDraggingRef.current = true;
     if (canvas) canvas.style.cursor = 'grabbing';
   };
@@ -1619,31 +1764,6 @@ export default function SpaceCanvas({
     const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0].clientX);
     const clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0].clientY);
     if (clientX === undefined || clientY === undefined) return;
-
-    if (draggedMicrobeRef.current) {
-      // 미생물 드래그 중 (rect 캐싱 사용으로 성능 최적화)
-      const clickX = clientX - dragStartRef.current.rectLeft;
-      const clickY = clientY - dragStartRef.current.rectTop;
-      const worldX = clickX + cameraRef.current.x;
-      const worldY = clickY + cameraRef.current.y;
-
-      const history = draggedMicrobeRef.current.history;
-      history.push({ x: worldX, y: worldY, time: performance.now() });
-      if (history.length > 5) history.shift();
-
-      // 드래그 중인 미생물의 위치를 강제로 마우스 위치로 동기화
-      const mId = draggedMicrobeRef.current.id;
-      const targetMicrobe = microbesRef.current.find(m => m.id === mId);
-      if (targetMicrobe) {
-        // 배양조 내부로 제한 (벽을 뚫지 않도록)
-        const margin = 24;
-        targetMicrobe.x = Math.max(3600 + margin, Math.min(4400 - margin, worldX));
-        targetMicrobe.y = Math.max(2700 + margin, Math.min(3300 - margin, worldY));
-        targetMicrobe.vx = 0;
-        targetMicrobe.vy = 0;
-      }
-      return;
-    }
 
     if (!isDraggingRef.current) return;
 
@@ -1664,36 +1784,7 @@ export default function SpaceCanvas({
   };
 
   const handleMouseUpOrLeave = () => {
-    if (draggedMicrobeRef.current) {
-      const history = draggedMicrobeRef.current.history;
-      const mId = draggedMicrobeRef.current.id;
-      const targetMicrobe = microbesRef.current.find(m => m.id === mId);
-
-      if (targetMicrobe && history.length >= 2) {
-        // 드래그 속도 계산하여 던지는 물리 효과 적용 (너무 빠르지 않도록 민감도 감소)
-        const first = history[0];
-        const last = history[history.length - 1];
-        const dt = (last.time - first.time) || 16;
-        
-        // 사용자의 요청으로 1.5배 상향 (민감도 0.9)
-        let throwVx = ((last.x - first.x) / dt) * 16 * 0.9;
-        let throwVy = ((last.y - first.y) / dt) * 16 * 0.9;
-
-        const maxSpeed = 23; // 최대 스로우 속도 1.5배 상향 (15 -> 23)
-        const speed = Math.sqrt(throwVx * throwVx + throwVy * throwVy);
-        if (speed > maxSpeed) {
-          throwVx = (throwVx / speed) * maxSpeed;
-          throwVy = (throwVy / speed) * maxSpeed;
-        }
-
-        targetMicrobe.vx = throwVx;
-        targetMicrobe.vy = throwVy;
-        targetMicrobe.state = 'mining';
-      }
-
-      draggedMicrobeRef.current = null;
-    }
-
+    draggedMicrobeRef.current = null;
     if (!isDraggingRef.current) return;
     isDraggingRef.current = false;
     const canvas = canvasRef.current;
@@ -1722,7 +1813,7 @@ export default function SpaceCanvas({
     for (let planet of foodPlanets) {
       const dist = Math.sqrt(Math.pow(worldClickX - planet.x, 2) + Math.pow(worldClickY - planet.y, 2));
       if (dist < 42) {
-        onPlanetClick(planet.id);
+        onPlanetClickRef.current?.(planet.id);
         return;
       }
     }

@@ -1,19 +1,24 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { foodPlanets } from '../utils/expeditions';
+
+const SUPPLY_ICON_COLUMNS = 4;
+const SUPPLY_ICON_SIZE = 32;
 
 export default function ExpeditionStartModal({ planet, microbes, onClose, onStart }) {
   if (!planet) return null;
 
   const requiredName = planet.requiredMicrobe;
-  const planetIndex = planet.id - 1;
-  const col = planetIndex % 4;
-  const row = Math.floor(planetIndex / 4);
+  const planetIndex = Math.max(0, foodPlanets.findIndex(p => p.id === planet.id));
+  const col = planetIndex % SUPPLY_ICON_COLUMNS;
+  const row = Math.floor(planetIndex / SUPPLY_ICON_COLUMNS);
   const iconStyle = {
     backgroundImage: `url('/images/icons_spritesheet.webp')`,
-    backgroundPosition: `-${col * 32}px -${row * 32}px`,
-    width: '32px',
-    height: '32px',
+    backgroundPosition: `-${col * SUPPLY_ICON_SIZE}px -${row * SUPPLY_ICON_SIZE}px`,
+    width: `${SUPPLY_ICON_SIZE}px`,
+    height: `${SUPPLY_ICON_SIZE}px`,
     display: 'inline-block',
+    imageRendering: 'pixelated',
     transform: 'scale(1.5)',
     transformOrigin: 'center'
   };
@@ -30,7 +35,7 @@ export default function ExpeditionStartModal({ planet, microbes, onClose, onStar
       >
         <div className="p-4 wood-panel-dark border-t-0 border-l-0 border-r-0 border-b-4 flex justify-between items-center rounded-none">
           <h2 className="text-xl font-bold text-[#343a40] flex items-center gap-2">
-            <div style={iconStyle} className="mr-2"></div> {planet.name} 탐사
+            {planet.name} 탐사
           </h2>
           <button 
             onClick={onClose}
@@ -48,7 +53,7 @@ export default function ExpeditionStartModal({ planet, microbes, onClose, onStar
           <div className="w-full bg-white p-4 rounded-xl border-4 border-[#dee2e6] text-center shadow-inner">
             <h3 className="text-sm font-bold text-[#868e96] mb-2 font-pixel">필요한 미생물</h3>
             <p className="text-xl font-bold text-[#495057]">
-              {requiredName} {hasMicrobe ? '✅' : '❌'}
+              {requiredName}
             </p>
             {!hasMicrobe && (
               <p className="mt-2 text-sm text-[#e63946] font-bold">

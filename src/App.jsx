@@ -10,44 +10,21 @@ import { foodPlanets } from './utils/expeditions';
 import { MicrobeIcon } from './components/VectorIcons';
 
 const STORAGE_WRITE_DELAY_MS = 500;
+const MIN_EXPEDITION_SECONDS = 7;
+const RESEARCH_COST = 100;
+const INITIAL_BIO_ENERGY = 500;
 
 export default function App() {
   // 1. 핵심 수치 상태 관리
   const [bioEnergy, setBioEnergy] = useState(() => {
     const saved = localStorage.getItem('space_bioEnergy');
-    return saved !== null ? JSON.parse(saved) : 300;
+    return saved !== null ? JSON.parse(saved) : INITIAL_BIO_ENERGY;
   });
   const [bioEnergyDelta, setBioEnergyDelta] = useState(null); // 차감 애니메이션 상태
+  const synthesisTimeoutRef = React.useRef(null);
   const [microbes, setMicrobes] = useState(() => {
     const saved = localStorage.getItem('space_microbes');
-    if (saved) return JSON.parse(saved);
-    const initialList = [];
-    const namesToSpawn = []; // 초기 상태 (미생물 없음)
-    namesToSpawn.forEach((name, idx) => {
-      const template = baseMicrobes[name] || combinedMicrobes[name];
-      if (template) {
-        initialList.push({
-          id: `init-${idx}-${Math.random()}`,
-          name: template.name,
-          type: template.type,
-          tier: template.tier,
-          glowColor: template.glowColor,
-          miningSpeed: template.miningSpeed,
-          capacity: template.capacity,
-          avatarSvg: template.avatarSvg,
-          x: 4000 + (Math.random() - 0.5) * 100,
-          y: 3000 + (Math.random() - 0.5) * 100,
-          vx: (Math.random() - 0.5) * 1,
-          vy: (Math.random() - 0.5) * 1,
-          state: 'mining',
-          energyCurrent: 0,
-          energyCapacity: template.capacity,
-          speed: template.name === '제트 짚신벌레' ? 2.5 : template.name === '짚신벌레' ? 1.4 : template.name === '아메바' ? 0.7 : 1.0,
-          targetNebulaId: 1 + (idx % 3)
-        });
-      }
-    });
-    return initialList;
+    return saved ? JSON.parse(saved) : [];
   });
   const [discoveredNames, setDiscoveredNames] = useState(() => {
     const saved = localStorage.getItem('space_discoveredNames');
@@ -89,6 +66,14 @@ export default function App() {
   React.useEffect(() => {
     localStorage.setItem('space_expeditions', JSON.stringify(expeditions));
   }, [expeditions]);
+
+  React.useEffect(() => {
+    return () => {
+      if (synthesisTimeoutRef.current) {
+        window.clearTimeout(synthesisTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // 1초 단위 타이머 tick으로 원정 시간 단축 처리
   React.useEffect(() => {
@@ -147,7 +132,10 @@ export default function App() {
           state: 'expedition', 
           targetPlanetId: planetId,
           x: 4000,
-          y: 3000
+          y: 3000,
+          vx: 0,
+          vy: 0,
+          angle: 0
         };
       }
       return m;
@@ -155,7 +143,7 @@ export default function App() {
 
     setExpeditions(prev => ({
       ...prev,
-      [planetId]: { status: 'exploring', timer: planet.duration }
+      [planetId]: { status: 'exploring', timer: Math.max(planet.duration, MIN_EXPEDITION_SECONDS) }
     }));
     
     setActiveModal(null);
@@ -240,44 +228,28 @@ export default function App() {
     const template = combinedMicrobes[resultName];
     if (!template) return;
 
+    const parentA = microbes.find(m => m.id === parentIdA);
+    const parentB = microbes.find(m => m.id === parentIdB);
+    if (!parentA || !parentB) return;
+
+    const mergeTargetX = (parentA.x + parentB.x) / 2;
+    const mergeTargetY = (parentA.y + parentB.y) / 2;
+
     setMicrobes(prev => {
-      const mA = prev.find(m => m.id === parentIdA);
-      const mB = prev.find(m => m.id === parentIdB);
-      if (!mA || !mB) return prev;
-
-      const mergeTargetX = (mA.x + mB.x) / 2;
-      const mergeTargetY = (mA.y + mB.y) / 2;
-      const newMicrobeId = `${Date.now()}-${Math.random()}`;
-
-      // 1. 기존 부모들은 'merging' 상태로 변경
-      const updated = prev.map(m => {
+      return prev.map(m => {
         if (m.id === parentIdA || m.id === parentIdB) {
-          return { ...m, state: 'merging', mergeTargetX, mergeTargetY };
+          return {
+            ...m,
+            state: 'merging',
+            mergeTargetX,
+            mergeTargetY,
+            vx: 0,
+            vy: 0,
+            energyCurrent: 0
+          };
         }
         return m;
       });
-
-      // 2. 새로운 미생물은 'spawning' 상태로 추가 (SpaceCanvas가 부모 도달 확인 후 활성화)
-      updated.push({
-        id: newMicrobeId,
-        name: template.name,
-        type: template.type,
-        tier: template.tier,
-        glowColor: template.glowColor,
-        miningSpeed: template.miningSpeed,
-        capacity: template.capacity,
-        avatarSvg: template.avatarSvg,
-        x: mergeTargetX,
-        y: mergeTargetY,
-        vx: 0, vy: 0, angle: 0,
-        state: 'spawning',
-        energyCurrent: 0,
-        energyCapacity: template.capacity,
-        speed: template.name === '제트 짚신벌레' ? 2.5 : 1.2,
-        mergeParents: [parentIdA, parentIdB]
-      });
-
-      return updated;
     });
 
     // 합성 시 돋보기 포커싱 상태가 해제되도록 안전장치 설정
@@ -291,13 +263,41 @@ export default function App() {
     }
 
     setActiveModal(null);
-  };
 
-  const handleSpawnAnimationComplete = (microbeName) => {
-    const template = combinedMicrobes[microbeName] || baseMicrobes[microbeName];
-    if (template) {
-      setDiscoveryResult(template);
+    if (synthesisTimeoutRef.current) {
+      window.clearTimeout(synthesisTimeoutRef.current);
     }
+
+    synthesisTimeoutRef.current = window.setTimeout(() => {
+      const newMicrobeId = `${Date.now()}-${Math.random()}`;
+      setMicrobes(prev => {
+        const updated = prev.filter(m => m.id !== parentIdA && m.id !== parentIdB);
+        updated.push({
+          id: newMicrobeId,
+          name: template.name,
+          type: template.type,
+          tier: template.tier,
+          glowColor: template.glowColor,
+          miningSpeed: template.miningSpeed,
+          capacity: template.capacity,
+          avatarSvg: template.avatarSvg,
+          x: mergeTargetX,
+          y: mergeTargetY,
+          vx: 0,
+          vy: 0,
+          angle: 0,
+          state: 'mining',
+          energyCurrent: 0,
+          energyCapacity: template.capacity,
+          speed: template.name === '제트 짚신벌레' ? 2.5 : 1.2
+        });
+        return updated;
+      });
+      synthesisTimeoutRef.current = window.setTimeout(() => {
+        setDiscoveryResult(template);
+        synthesisTimeoutRef.current = null;
+      }, 500);
+    }, 900);
   };
 
   // 7. 자원 수확량 누적 함수
@@ -307,13 +307,17 @@ export default function App() {
 
   // 연구(퀴즈) 시작 핸들러
   const handleOpenQuiz = () => {
-    if (bioEnergy < 300) {
-      setAlertMessage(`연구에 필요한 바이오 에너지가 부족합니다.\n(필요 자원: 300 Bio)`);
-      return;
-    }
-    setBioEnergy(prev => prev - 300);
-    setBioEnergyDelta({ amount: "-300", id: Date.now() });
     setActiveModal('quiz');
+  };
+
+  const handleSpendResearchCost = () => {
+    if (bioEnergy < RESEARCH_COST) {
+      setAlertMessage(`연구에 필요한 바이오 에너지가 부족합니다.\n(필요 자원: ${RESEARCH_COST} Bio)`);
+      return false;
+    }
+    setBioEnergy(prev => prev - RESEARCH_COST);
+    setBioEnergyDelta({ amount: `-${RESEARCH_COST}`, id: Date.now() });
+    return true;
   };
 
   const handleResetGame = () => {
@@ -338,7 +342,6 @@ export default function App() {
           setFocusedMicrobe={setFocusedMicrobe}
           expeditions={expeditions}
           onPlanetClick={handlePlanetClick}
-          onSpawnAnimationComplete={handleSpawnAnimationComplete}
         />
 
         {/* 2. 맵 위에 플로팅되는 최소형 HUD (모바일 스택 대응) */}
@@ -385,7 +388,7 @@ export default function App() {
             onClick={handleOpenQuiz}
             className="pointer-events-auto px-6 py-3 pixel-btn-orange text-lg font-bold cursor-pointer"
           >
-            연구 (300 Bio)
+            연구 ({RESEARCH_COST} Bio)
           </button>
           <button
             onClick={() => setActiveModal('synth')}
@@ -459,6 +462,7 @@ export default function App() {
         isOpen={activeModal === 'quiz'}
         onClose={() => setActiveModal(null)}
         onQuizSuccess={handleQuizSuccess}
+        onSpendResearchCost={handleSpendResearchCost}
       />
 
       <Synthesizer

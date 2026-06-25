@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { baseMicrobes, combinedMicrobes, recipes } from '../utils/recipes';
 import { MicrobeIcon } from './VectorIcons';
 
-export default function Encyclopedia({ isOpen, onClose, discoveredNames }) {
+export default function Encyclopedia({ isOpen, onClose, discoveredNames, microbes = [] }) {
   const [selectedItem, setSelectedItem] = useState(null);
 
   if (!isOpen) return null;
@@ -12,6 +12,10 @@ export default function Encyclopedia({ isOpen, onClose, discoveredNames }) {
     ...Object.values(baseMicrobes),
     ...Object.values(combinedMicrobes)
   ];
+  const visibleNames = new Set([
+    ...discoveredNames,
+    ...microbes.map(m => m.name)
+  ]);
 
   const handleSelectItem = (item) => {
     setSelectedItem(item);
@@ -41,7 +45,7 @@ export default function Encyclopedia({ isOpen, onClose, discoveredNames }) {
           {/* 도감 그리드 리스트 */}
           <div className="flex-1 overflow-y-auto wood-panel p-5 grid grid-cols-2 sm:grid-cols-3 gap-4">
             {allItems.map((item, idx) => {
-              const isDiscovered = discoveredNames.includes(item.name);
+              const isDiscovered = visibleNames.has(item.name);
               
               return (
                 <div
@@ -75,7 +79,7 @@ export default function Encyclopedia({ isOpen, onClose, discoveredNames }) {
         {/* 우측 상세 설명 영역 */}
         <div className="w-full md:w-[420px] wood-panel p-8 flex flex-col items-center justify-start text-center min-h-[400px]">
           {selectedItem ? (
-            discoveredNames.includes(selectedItem.name) ? (
+            visibleNames.has(selectedItem.name) ? (
               <div className="w-full flex flex-col items-center h-full animate-fade-in">
                 {/* 돋보기형 원형 그래픽 프레임 (그레이스타일) */}
                 <div className="w-48 h-48 border-8 border-[#adb5bd] rounded-full bg-[#f8f9fa] flex items-center justify-center shadow-inner mb-6 relative overflow-hidden">
