@@ -9,7 +9,7 @@ export const foodPlanets = [
     foodIcon: '🥛',
     requiredMicrobe: '슈퍼 젖산균',
     duration: 1, // 10초 탐사
-    rewardAmount: 15, // 배달 시 얻는 에너지
+    rewardAmount: 10, // 배달 시 얻는 에너지
     storyTitle: '🥛 요구르트 행성 탐사 일지',
     storyboard: [
       {
@@ -36,7 +36,7 @@ export const foodPlanets = [
     foodIcon: '🍞',
     requiredMicrobe: '구름 이스트',
     duration: 1,
-    rewardAmount: 20,
+    rewardAmount: 10,
     storyTitle: '🍞 식빵 성운 탐사 일지',
     storyboard: [
       {
@@ -63,7 +63,7 @@ export const foodPlanets = [
     foodIcon: '💊',
     requiredMicrobe: '네온 곰팡이',
     duration: 1,
-    rewardAmount: 30,
+    rewardAmount: 10,
     storyTitle: '💊 푸른곰팡이 행성 탐사 일지',
     storyboard: [
       {
@@ -90,7 +90,7 @@ export const foodPlanets = [
     foodIcon: '🌶',
     requiredMicrobe: '매콤 젖산균',
     duration: 1,
-    rewardAmount: 25,
+    rewardAmount: 10,
     storyTitle: '🌶 김치 위성 탐사 일지',
     storyboard: [
       {
@@ -117,7 +117,7 @@ export const foodPlanets = [
     foodIcon: '🍫',
     requiredMicrobe: '달콤 이스트',
     duration: 1,
-    rewardAmount: 18,
+    rewardAmount: 10,
     storyTitle: '🍫 초콜릿 행성 탐사 일지',
     storyboard: [
       {
@@ -144,7 +144,7 @@ export const foodPlanets = [
     foodIcon: '🧀',
     requiredMicrobe: '황금 젖산균',
     duration: 1,
-    rewardAmount: 22,
+    rewardAmount: 10,
     storyTitle: '🧀 치즈 행성 탐사 일지',
     storyboard: [
       {
@@ -171,7 +171,7 @@ export const foodPlanets = [
     foodIcon: '☕',
     requiredMicrobe: '메가 이스트',
     duration: 1,
-    rewardAmount: 35,
+    rewardAmount: 10,
     storyTitle: '☕ 커피 위성 탐사 일지',
     storyboard: [
       {
@@ -198,7 +198,7 @@ export const foodPlanets = [
     foodIcon: '🧫',
     requiredMicrobe: '끈적 고초균',
     duration: 1,
-    rewardAmount: 25,
+    rewardAmount: 10,
     storyTitle: '🧫 청국장 위성 탐사 일지',
     storyboard: [
       {
@@ -225,7 +225,7 @@ export const foodPlanets = [
     foodIcon: '🍚',
     requiredMicrobe: '누룩곰팡이',
     duration: 1,
-    rewardAmount: 28,
+    rewardAmount: 10,
     storyTitle: '🍚 된장 성운 탐사 일지',
     storyboard: [
       {
@@ -252,7 +252,7 @@ export const foodPlanets = [
     foodIcon: '🏺',
     requiredMicrobe: '아세트산균',
     duration: 1,
-    rewardAmount: 30,
+    rewardAmount: 10,
     storyTitle: '🏺 식초 바다 행성 탐사 일지',
     storyboard: [
       {
@@ -279,7 +279,7 @@ export const foodPlanets = [
     foodIcon: '🍲',
     requiredMicrobe: '화산 버섯',
     duration: 1,
-    rewardAmount: 40,
+    rewardAmount: 10,
     storyTitle: '🍲 버섯 수프 행성 탐사 일지',
     storyboard: [
       {

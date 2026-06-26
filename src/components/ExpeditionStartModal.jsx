@@ -1,6 +1,7 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { foodPlanets } from '../utils/expeditions';
+import { recipes } from '../utils/recipes';
 
 const SUPPLY_ICON_COLUMNS = 4;
 const SUPPLY_ICON_SIZE = 32;
@@ -24,6 +25,8 @@ export default function ExpeditionStartModal({ planet, microbes, onClose, onStar
   };
   const availableMicrobe = microbes.find(m => m.name === requiredName && m.state !== 'expedition');
   const hasMicrobe = !!availableMicrobe;
+  const recipeEntry = Object.entries(recipes).find(([, resultName]) => resultName === requiredName);
+  const recipeParts = recipeEntry ? recipeEntry[0].split('+') : null;
 
   return (
     <div className="fixed top-0 left-0 w-screen h-[100dvh] z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm font-sans">
@@ -56,9 +59,19 @@ export default function ExpeditionStartModal({ planet, microbes, onClose, onStar
               {requiredName}
             </p>
             {!hasMicrobe && (
-              <p className="mt-2 text-sm text-[#e63946] font-bold">
-                배양조에 휴식 중인 '{requiredName}'(이)가 필요합니다!
-              </p>
+              <div className="mt-2 flex flex-col gap-2">
+                <p className="text-sm text-[#e63946] font-bold">
+                  배양조에 휴식 중인 '{requiredName}'(이)가 필요합니다!
+                </p>
+                {recipeParts && (
+                  <div className="bg-[#f8f9fa] border-2 border-[#dee2e6] rounded-lg p-3">
+                    <p className="text-xs font-bold text-[#868e96] font-pixel mb-1">조합 방법</p>
+                    <p className="text-base font-bold text-[#495057]">
+                      {recipeParts[0]} + {recipeParts[1]} = {requiredName}
+                    </p>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
