@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { baseMicrobes, combinedMicrobes, recipes } from '../utils/recipes';
 import { MicrobeIcon } from './VectorIcons';
 
-export default function Encyclopedia({ isOpen, onClose, discoveredNames, microbes = [] }) {
+export default function Encyclopedia({ isOpen, onClose, microbes = [] }) {
   const [selectedItem, setSelectedItem] = useState(null);
 
   if (!isOpen) return null;
@@ -12,10 +12,7 @@ export default function Encyclopedia({ isOpen, onClose, discoveredNames, microbe
     ...Object.values(baseMicrobes),
     ...Object.values(combinedMicrobes)
   ];
-  const visibleNames = new Set([
-    ...discoveredNames,
-    ...microbes.map(m => m.name)
-  ]);
+  const visibleNames = new Set(microbes.map(m => m.name));
 
   const handleSelectItem = (item) => {
     setSelectedItem(item);

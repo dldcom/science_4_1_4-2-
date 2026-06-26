@@ -29,7 +29,7 @@ export default function App() {
   const [discoveredNames, setDiscoveredNames] = useState(() => {
     const saved = localStorage.getItem('space_discoveredNames');
     if (saved) return JSON.parse(saved);
-    return ['짚신벌레', '버섯', '젖산균', '이스트', '네온 곰팡이', '메가 이스트', '고초균', '누룩곰팡이', '화산 버섯'];
+    return [];
   });
 
   const [discoveryResult, setDiscoveryResult] = useState(null); // 애니메이션 완료 후 보여줄 팝업 데이터
@@ -476,7 +476,6 @@ export default function App() {
         <Encyclopedia 
           isOpen={true}
           microbes={microbes} 
-          discoveredNames={discoveredNames}
           onClose={() => setActiveModal(null)} 
         />
       )}
