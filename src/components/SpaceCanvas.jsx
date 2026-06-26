@@ -9,6 +9,8 @@ const SUPPLY_ICON_COLUMNS = 4;
 const SUPPLY_ICON_SIZE = 32;
 const DAFFODIL_CANAL_COLOR = '#f7d65a';
 const DAFFODIL_CANAL_GLOW = 'rgba(247, 214, 90, 0.52)';
+const TARGET_FPS = 60;
+const NATURAL_BIO_PER_SECOND = 1;
 
 const spriteMapping = {
   '버섯': { row: 0, col: 0 },
@@ -537,6 +539,12 @@ export default function SpaceCanvas({
 
   // 포탈 (중앙 에너지 수집기) - 연못 정중앙
   const collector = { x: 4000, y: 3000, radius: 25, color: '#00ffff' };
+  const tankBounds = {
+    minX: 4000 - 800 / 2,
+    maxX: 4000 + 800 / 2,
+    minY: 3000 - 600 / 2,
+    maxY: 3000 + 600 / 2
+  };
 
   const particlesRef = useRef([]);
   const textPopupsRef = useRef([]);
@@ -590,18 +598,54 @@ export default function SpaceCanvas({
     pool.push({ ...props, active: true });
   };
 
+  const findOpenSpawnPosition = (preferredX, preferredY, occupiedMicrobes) => {
+    const margin = 34;
+    const minDistance = 58;
+    const clampX = (value) => Math.max(tankBounds.minX + margin, Math.min(tankBounds.maxX - margin, value));
+    const clampY = (value) => Math.max(tankBounds.minY + margin, Math.min(tankBounds.maxY - margin, value));
+    const isOpen = (x, y) => occupiedMicrobes.every(m => {
+      if (m.state === 'expedition') return true;
+      const dx = x - m.x;
+      const dy = y - m.y;
+      return Math.sqrt(dx * dx + dy * dy) >= minDistance;
+    });
+
+    const baseX = clampX(preferredX ?? collector.x);
+    const baseY = clampY(preferredY ?? collector.y);
+    if (isOpen(baseX, baseY)) return { x: baseX, y: baseY };
+
+    for (let ring = 1; ring <= 8; ring++) {
+      const radius = ring * minDistance;
+      const steps = 8 + ring * 4;
+      const phase = ring * 0.73;
+      for (let step = 0; step < steps; step++) {
+        const angle = phase + (Math.PI * 2 * step) / steps;
+        const x = clampX(baseX + Math.cos(angle) * radius);
+        const y = clampY(baseY + Math.sin(angle) * radius);
+        if (isOpen(x, y)) return { x, y };
+      }
+    }
+
+    return {
+      x: clampX(baseX + (Math.random() - 0.5) * 260),
+      y: clampY(baseY + (Math.random() - 0.5) * 220)
+    };
+  };
+
   // props로 전달받은 미생물 목록과 로컬 Ref 목록 간 유연한 동기화
   useEffect(() => {
     const currentRefMap = new Map(microbesRef.current.map(m => [m.id, m]));
-    const updatedList = microbes.map(m => {
+    const updatedList = [];
+    microbes.forEach(m => {
       if (currentRefMap.has(m.id)) {
         const oldM = currentRefMap.get(m.id);
         // 상태가 변경되었을 때(예: 'mining' -> 'expedition')는 상위 컴포넌트(App.jsx)의 좌표 등 초기화 값을 그대로 수용
         if (oldM.state !== m.state) {
-          return { ...m };
+          updatedList.push({ ...m });
+          return;
         }
         // 상태가 유지 중일 때는 로컬 물리 시뮬레이션의 위치 및 속도 값을 우선함
-        return {
+        updatedList.push({
           ...m,
           x: oldM.x,
           y: oldM.y,
@@ -609,10 +653,16 @@ export default function SpaceCanvas({
           vy: oldM.vy,
           angle: oldM.angle,
           energyCurrent: oldM.energyCurrent
-        };
+        });
+        return;
       } else {
         // 새로 추가된 미생물 (스폰/조합)
-        return m;
+        const spawnPosition = findOpenSpawnPosition(m.x, m.y, updatedList);
+        updatedList.push({
+          ...m,
+          x: spawnPosition.x,
+          y: spawnPosition.y
+        });
       }
     });
     microbesRef.current = updatedList;
@@ -763,8 +813,8 @@ export default function SpaceCanvas({
             }
           }
 
-          // 자연 채굴량 축적
-          energyCurrent += m.miningSpeed * 0.012;
+          // 자연 수집량 축적: 지급 Bio(capacity)와 자연 수집 시간(초)을 1:1로 맞춤
+          energyCurrent += NATURAL_BIO_PER_SECOND / TARGET_FPS;
           if (energyCurrent >= energyCapacity) {
             energyCurrent = energyCapacity;
             state = 'returning';
