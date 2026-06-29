@@ -98,6 +98,19 @@ export default function App() {
   }, [expeditions]);
 
   React.useEffect(() => {
+    const imagePaths = new Set();
+    foodPlanets.forEach(planet => {
+      planet.storyboard?.forEach(slide => imagePaths.add(slide.image));
+    });
+
+    imagePaths.forEach(src => {
+      const img = new Image();
+      img.src = src;
+      img.decode?.().catch(() => {});
+    });
+  }, []);
+
+  React.useEffect(() => {
     return () => {
       if (synthesisTimeoutRef.current) {
         window.clearTimeout(synthesisTimeoutRef.current);

@@ -86,14 +86,15 @@ export default function StoryboardModal({ planet, onClose }) {
               <motion.img
                 key={currentSlide}
                 src={slide.image}
-                initial={{ opacity: 0, filter: 'blur(10px)', scale: 1.05 }}
+                initial={currentSlide === 0 ? false : { opacity: 0, filter: 'blur(10px)', scale: 1.05 }}
                 animate={{ opacity: 1, filter: 'blur(0px)', scale: 1 }}
                 exit={{ opacity: 0, filter: 'blur(10px)', scale: 1.05 }}
-                transition={{ duration: 0.4 }}
+                transition={{ duration: currentSlide === 0 ? 0 : 0.4 }}
                 className="absolute inset-0 w-full h-full object-cover"
                 alt="Story illustration"
-                loading="lazy"
-                decoding="async"
+                loading="eager"
+                decoding="sync"
+                fetchPriority={currentSlide === 0 ? 'high' : 'auto'}
               />
             </AnimatePresence>
             <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
