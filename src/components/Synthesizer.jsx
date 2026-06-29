@@ -11,6 +11,8 @@ export default function Synthesizer({ isOpen, onClose, microbes, onSynthesizeSuc
 
   // 우주 공간에 배치되어 합성 재료로 쓸 수 있는 미생물 리스트 필터링
   const availableMicrobes = microbes.filter(m => 
+    m.state !== 'expedition' &&
+    m.state !== 'merging' &&
     (!slotA || m.id !== slotA.id) && 
     (!slotB || m.id !== slotB.id)
   );

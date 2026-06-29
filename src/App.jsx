@@ -13,6 +13,17 @@ const STORAGE_WRITE_DELAY_MS = 500;
 const MIN_EXPEDITION_SECONDS = 7;
 const RESEARCH_COST = 100;
 const INITIAL_BIO_ENERGY = 500;
+const LEGACY_PRE_DISCOVERED_NAMES = [
+  '짚신벌레',
+  '버섯',
+  '젖산균',
+  '이스트',
+  '네온 곰팡이',
+  '메가 이스트',
+  '고초균',
+  '누룩곰팡이',
+  '화산 버섯'
+];
 
 export default function App() {
   // 1. 핵심 수치 상태 관리
@@ -28,8 +39,16 @@ export default function App() {
   });
   const [discoveredNames, setDiscoveredNames] = useState(() => {
     const saved = localStorage.getItem('space_discoveredNames');
-    if (saved) return JSON.parse(saved);
-    return [];
+    const currentNames = new Set(microbes.map(m => m.name));
+    if (!saved) return Array.from(currentNames);
+
+    const savedNames = JSON.parse(saved);
+    const hasLegacyDefaults = LEGACY_PRE_DISCOVERED_NAMES.every(name => savedNames.includes(name));
+    const migratedNames = hasLegacyDefaults
+      ? savedNames.filter(name => !LEGACY_PRE_DISCOVERED_NAMES.includes(name) || currentNames.has(name))
+      : savedNames;
+
+    return Array.from(new Set([...migratedNames, ...currentNames]));
   });
 
   const [discoveryResult, setDiscoveryResult] = useState(null); // 애니메이션 완료 후 보여줄 팝업 데이터
@@ -62,6 +81,17 @@ export default function App() {
   React.useEffect(() => {
     localStorage.setItem('space_discoveredNames', JSON.stringify(discoveredNames));
   }, [discoveredNames]);
+
+  React.useEffect(() => {
+    const currentNames = [...new Set(microbes.map(m => m.name))];
+    if (currentNames.length === 0) return;
+
+    setDiscoveredNames(prev => {
+      const next = new Set(prev);
+      currentNames.forEach(name => next.add(name));
+      return next.size === prev.length ? prev : Array.from(next);
+    });
+  }, [microbes]);
 
   React.useEffect(() => {
     localStorage.setItem('space_expeditions', JSON.stringify(expeditions));
@@ -475,7 +505,7 @@ export default function App() {
       {activeModal === 'ency' && (
         <Encyclopedia 
           isOpen={true}
-          microbes={microbes} 
+          discoveredNames={discoveredNames}
           onClose={() => setActiveModal(null)} 
         />
       )}
