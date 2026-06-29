@@ -639,8 +639,12 @@ export default function SpaceCanvas({
     microbes.forEach(m => {
       if (currentRefMap.has(m.id)) {
         const oldM = currentRefMap.get(m.id);
-        // 상태가 변경되었을 때(예: 'mining' -> 'expedition')는 상위 컴포넌트(App.jsx)의 좌표 등 초기화 값을 그대로 수용
-        if (oldM.state !== m.state) {
+        const shouldAcceptExternalState =
+          oldM.state !== m.state &&
+          (m.state === 'expedition' || m.state === 'merging');
+
+        // App에서 명시적으로 시작한 탐사/합성 전환만 외부 상태를 수용한다.
+        if (shouldAcceptExternalState) {
           updatedList.push({ ...m });
           return;
         }
@@ -652,7 +656,11 @@ export default function SpaceCanvas({
           vx: oldM.vx,
           vy: oldM.vy,
           angle: oldM.angle,
-          energyCurrent: oldM.energyCurrent
+          state: oldM.state,
+          energyCurrent: oldM.energyCurrent,
+          targetPlanetId: oldM.targetPlanetId,
+          mergeTargetX: oldM.mergeTargetX,
+          mergeTargetY: oldM.mergeTargetY
         });
         return;
       } else {
@@ -676,12 +684,13 @@ export default function SpaceCanvas({
       const newMicrobes = microbes.filter(m => !prevIds.has(m.id));
       
       newMicrobes.forEach(newM => {
-        for (let i = 0; i < 25; i++) {
+        const liveNewMicrobe = microbesRef.current.find(m => m.id === newM.id) || newM;
+        for (let i = 0; i < 12; i++) {
           const angleVal = Math.random() * Math.PI * 2;
           const pSpeed = 1.5 + Math.random() * 4.0;
           spawnParticle({
-            x: newM.x,
-            y: newM.y,
+            x: liveNewMicrobe.x,
+            y: liveNewMicrobe.y,
             vx: Math.cos(angleVal) * pSpeed,
             vy: Math.sin(angleVal) * pSpeed,
             color: ['#ffb300', '#ffa726', '#66bb6a', '#29b6f6', '#ab47bc'][Math.floor(Math.random() * 5)],
