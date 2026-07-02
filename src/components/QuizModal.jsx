@@ -24,10 +24,17 @@ export default function QuizModal({ isOpen, onClose, onQuizSuccess, onSpendResea
   const [isSummoning, setIsSummoning] = useState(false);
   const [costError, setCostError] = useState('');
   const microscopeRef = useRef(null);
+  const summonStartedRef = useRef(false);
+  const summonTimeoutRef = useRef(null);
   const [summonCoords, setSummonCoords] = useState({ startX: 0, startY: 0, diffX: 0, diffY: 0 });
 
   useEffect(() => {
     if (isOpen) {
+      if (summonTimeoutRef.current) {
+        clearTimeout(summonTimeoutRef.current);
+        summonTimeoutRef.current = null;
+      }
+      summonStartedRef.current = false;
       setSelectedTarget(null);
       setCurrentQuiz(null);
       setSelectedOption(null);
@@ -37,6 +44,14 @@ export default function QuizModal({ isOpen, onClose, onQuizSuccess, onSpendResea
       setCostError('');
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    return () => {
+      if (summonTimeoutRef.current) {
+        clearTimeout(summonTimeoutRef.current);
+      }
+    };
+  }, []);
 
   if (!isOpen) return null;
 
@@ -74,6 +89,9 @@ export default function QuizModal({ isOpen, onClose, onQuizSuccess, onSpendResea
   };
 
   const handleCollect = () => {
+    if (summonStartedRef.current) return;
+    summonStartedRef.current = true;
+
     if (isCorrect) {
       const canvasEl = document.getElementById('space-canvas');
       const microscopeEl = microscopeRef.current;
@@ -111,12 +129,14 @@ export default function QuizModal({ isOpen, onClose, onQuizSuccess, onSpendResea
       }
 
       setIsSummoning(true);
-      setTimeout(() => {
+      summonTimeoutRef.current = setTimeout(() => {
         onQuizSuccess(currentQuiz.targetMicrobe, targetWorldX, targetWorldY);
         setIsSummoning(false);
+        summonTimeoutRef.current = null;
         onClose();
       }, 1200);
     } else {
+      summonStartedRef.current = false;
       onClose();
     }
   };
@@ -251,7 +271,8 @@ export default function QuizModal({ isOpen, onClose, onQuizSuccess, onSpendResea
                     {isCorrect && (
                       <button
                         onClick={handleCollect}
-                        className="px-8 py-4 pixel-btn-gray rounded-xl text-xl font-bold transition-all cursor-pointer w-full max-w-sm animate-bounce shadow-lg"
+                        disabled={isSummoning}
+                        className={`px-8 py-4 pixel-btn-gray rounded-xl text-xl font-bold transition-all w-full max-w-sm shadow-lg ${isSummoning ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer animate-bounce'}`}
                       >
                         [{currentQuiz.targetMicrobe}] 배양조 소환하기
                       </button>
